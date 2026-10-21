@@ -1,0 +1,49 @@
+{
+ "version": 1,
+ "courses": [
+  {
+   "id": "a0",
+   "title": {
+    "ru": "Уровень A0",
+    "tg": "Сатҳи A0"
+   },
+   "lessons": [
+    {
+     "id": "a0_01",
+     "title": {
+      "ru": "Знакомство",
+      "tg": "Шиносоӣ"
+     },
+     "path": "data/lessons/a0_01/lesson.json",
+     "free": true,
+     "audio": null,
+     "bytes": 40094
+    },
+    {
+     "id": "a0_02",
+     "title": {
+      "ru": "Семья",
+      "tg": "Оила"
+     },
+     "soon": true
+    },
+    {
+     "id": "a0_03",
+     "title": {
+      "ru": "Магазин",
+      "tg": "Мағоза"
+     },
+     "soon": true
+    },
+    {
+     "id": "a0_04",
+     "title": {
+      "ru": "Транспорт",
+      "tg": "Нақлиёт"
+     },
+     "soon": true
+    }
+   ]
+  }
+ ]
+}

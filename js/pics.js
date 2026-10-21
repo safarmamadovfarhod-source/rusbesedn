@@ -1,0 +1,11 @@
+/* Простые оригинальные иллюстрации (SVG, стиль «Пиёла»): без флагов, брендов и национальной одежды. */
+const S = (inner) => '<svg viewBox="0 0 120 90" width="100%" height="100%" aria-hidden="true">' + inner + '</svg>';
+const person = (x, face) => '<circle cx="' + x + '" cy="30" r="12" fill="#fff" stroke="#14302E" stroke-width="3"/><path d="M' + (x - 16) + ' 74Q' + x + ' 42 ' + (x + 16) + ' 74Z" fill="#0D7C76" stroke="#14302E" stroke-width="3" stroke-linejoin="round"/>' + face;
+const smile = x => '<path d="M' + (x - 6) + ' 32Q' + x + ' 38 ' + (x + 6) + ' 32" fill="none" stroke="#14302E" stroke-width="2.5" stroke-linecap="round"/><circle cx="' + (x - 4) + '" cy="27" r="1.8" fill="#14302E"/><circle cx="' + (x + 4) + '" cy="27" r="1.8" fill="#14302E"/>';
+export const PICS = {
+  p1: S(person(36, smile(36)) + person(84, smile(84)) + '<path d="M50 52L62 36" stroke="#14302E" stroke-width="3" stroke-linecap="round"/><path d="M58 30l4 6 6-4" fill="none" stroke="#B3224B" stroke-width="3" stroke-linecap="round"/>'),
+  p2: S(person(48, smile(48)) + '<path d="M48 56l10 6" stroke="#14302E" stroke-width="3" stroke-linecap="round"/><rect x="74" y="52" width="26" height="22" rx="5" fill="#E3A33B" stroke="#14302E" stroke-width="3"/><path d="M74 60h26" stroke="#14302E" stroke-width="3"/>'),
+  p3: S('<path d="M22 40H98C98 74 78 84 60 84C42 84 22 74 22 40Z" fill="#fff" stroke="#14302E" stroke-width="4" stroke-linejoin="round"/><circle cx="48" cy="56" r="4" fill="#14302E"/><circle cx="72" cy="56" r="4" fill="#14302E"/><path d="M52 66Q60 74 68 66" fill="none" stroke="#14302E" stroke-width="3.5" stroke-linecap="round"/><path d="M44 18l9 9 17-17" fill="none" stroke="#0D7C76" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'),
+  p4: S(person(36, smile(36)) + person(84, smile(84)) + '<path d="M52 58H68" stroke="#14302E" stroke-width="4" stroke-linecap="round"/><path d="M60 22c-6-8-14 2-6 8l6 5 6-5c8-6 0-16-6-8z" fill="#B3224B" stroke="#14302E" stroke-width="2"/>'),
+  p5: S(person(60, '<circle cx="56" cy="27" r="1.8" fill="#14302E"/><circle cx="64" cy="27" r="1.8" fill="#14302E"/><path d="M55 35h10" stroke="#14302E" stroke-width="2.5" stroke-linecap="round"/>') + '<path d="M82 24c0-10 16-10 16 0 0 7-8 6-8 14" fill="none" stroke="#B3224B" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="46" r="3.2" fill="#B3224B"/>')
+};
