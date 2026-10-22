@@ -3,8 +3,8 @@ import { dateStr } from "./util.js";
 const KEY = "rs_state_v1";
 const DEFAULT = () => ({
   v: 1,
-  settings: { uiLang: null, hintLang: "tg", dailyMin: 15, rhythm: "daily", large: false },
-  onboarded: false, diag: null,
+  settings: { uiLang: null, hintLang: "tg", dailyMin: 15, rhythm: "daily", large: false, track: "a", theme: "c", level: null, voice: "f", tilt: "on" },
+  onboarded: false, diag: null, diagB: null, order: {},
   progress: { lessons: {}, xp: 0, minutes: {}, days: [] },
   srs: {}, shadow: {}, badges: {}, events: [], errors: [], reports: [],
   lastOpen: null, backShownOn: null

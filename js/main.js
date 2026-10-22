@@ -1,11 +1,13 @@
 import { app } from "./app.js";
 import { S, load, save, today, now } from "./store.js";
 import { loadI18n, t, lang, missing } from "./i18n.js";
-import { loadAll, C } from "./content.js";
+import { loadAll, C, setCurrent, nextLessonId, firstLessonId } from "./content.js";
 import { diffDays } from "./util.js";
 import { log, logError } from "./analytics.js";
 import * as audio from "./audio.js";
 import { nav } from "./nav.js";
+import { bowl } from "./ui.js";
+import { startTilt, askTilt, setTilt, syncCup, enabled } from "./cup.js";
 import "./screens/onboarding.js";
 import "./screens/home.js";
 import "./screens/lesson.js";
@@ -13,9 +15,10 @@ import "./screens/dialog.js";
 import "./screens/settings.js";
 import { sheetHtml } from "./screens/lesson.js";
 
-const TABS = ["home", "words", "talk", "progress"];
+const TABS = ["home", "words", "talk", "settings"];
 const $ = s => document.querySelector(s);
 const isTab = id => TABS.includes(id);
+app.applyTheme = () => { document.documentElement.dataset.theme = S.settings.theme || "c"; };
 app.scrollTop = bottom => { const v = $("#view"); if (v) v.scrollTop = bottom ? v.scrollHeight : 0; };
 app.toast = msg => { const old = $(".toast"); if (old) old.remove(); const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = msg; $("#phone").appendChild(d); setTimeout(() => d.remove(), 2400); };
 
@@ -26,7 +29,7 @@ app.render = keep => {
   view.innerHTML = '<div class="scr" tabindex="-1" data-screen="' + app.cur + '">' + fn() + "</div>" + sheetHtml();
   view.scrollTop = prev;
   $("#navhost").innerHTML = isTab(app.cur) ? nav(app.cur) : "";
-  const root = document.documentElement; root.lang = lang(); root.className = S.settings.large ? "large" : "";
+  const root = document.documentElement; root.lang = lang(); root.className = S.settings.large ? "large" : ""; root.dataset.theme = S.settings.theme || "c"; const mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.content = { a: "#1F4E79", b: "#3A3FD8", c: "#0D7C76" }[S.settings.theme || "c"]; syncCup();
   document.title = t("app");
 };
 app.go = (id, o) => {
@@ -54,6 +57,25 @@ window.addEventListener("online", () => { if (app.cur === "home") app.render(tru
 window.addEventListener("offline", () => { if (app.cur === "home") app.render(true); });
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); app.installPrompt = e; if (app.cur === "settings") app.render(true); });
 
+/* заставка: первый запуск и возвращение после отвлечения (порог 5 минут); до 1,5 с, пропускается касанием */
+const SPLASH_MS = 1400, AWAY_MS = 5 * 60 * 1000;
+function showSplash() {
+  if ($("#splash")) return;
+  const d = document.createElement("div"); d.id = "splash"; d.setAttribute("role", "presentation");
+  d.innerHTML = bowl(70, "") + "<b>" + t("app") + "</b>"; $("#phone").appendChild(d);
+  const hide = () => { if (!d.isConnected) return; d.classList.add("out"); setTimeout(() => d.remove(), 260); };
+  d.addEventListener("click", hide); setTimeout(hide, SPLASH_MS); syncCup();
+}
+app.showSplash = showSplash;
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { hiddenAt = Date.now(); return; }
+  if (hiddenAt && Date.now() - hiddenAt >= AWAY_MS && S.onboarded) showSplash();
+  hiddenAt = 0;
+});
+app.ACT.tiltask = async () => { const ok = await askTilt(); app.render(true); if (!ok) app.toast(t("tilt_note")); };
+app.ACT.settilt = e => { setTilt(e.dataset.v === "on"); app.render(true); };
+
 async function boot() {
   load();
   try {
@@ -61,13 +83,15 @@ async function boot() {
     window.__app = app; window.__S = S; window.__missing = missing; window.__C = C;
     const td = today(), first = !S.onboarded;
     log("app_open");
-    if (first) { app.cur = "lang"; }
+    if (first) { app.cur = "lang"; } else if (!S.onboarded) { app.cur = "lang"; }
     else {
       const gap = S.lastOpen ? diffDays(td, S.lastOpen) : 0;
       if (gap >= 3 && S.backShownOn !== td) { S.backShownOn = td; app.st.gap = gap; log("return_after_break"); app.cur = "back"; } else app.cur = "home";
     }
     S.lastOpen = td; save();
     app.render(false);
+    if (!S.settings.tilt || S.settings.tilt === "on") startTilt();
+    if (first) showSplash();
     document.body.classList.add("ready");
   } catch (e) {
     logError(e && e.message);

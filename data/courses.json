@@ -2,7 +2,7 @@
  "version": 1,
  "courses": [
   {
-   "id": "a0",
+   "id": "a",
    "title": {
     "ru": "Уровень A0",
     "tg": "Сатҳи A0"
@@ -17,7 +17,8 @@
      "path": "data/lessons/a0_01/lesson.json",
      "free": true,
      "audio": null,
-     "bytes": 40094
+     "bytes": 49535,
+     "topic": "intro"
     },
     {
      "id": "a0_02",
@@ -42,6 +43,49 @@
       "tg": "Нақлиёт"
      },
      "soon": true
+    }
+   ],
+   "track": "a"
+  },
+  {
+   "id": "b",
+   "track": "b",
+   "title": {
+    "ru": "Знаю русский"
+   },
+   "lessons": [
+    {
+     "id": "b_01",
+     "title": {
+      "ru": "В или на? Где и куда"
+     },
+     "topic": "vna",
+     "path": "data/lessons/b_01/lesson.json",
+     "free": true,
+     "audio": null,
+     "bytes": 26369
+    },
+    {
+     "id": "b_02",
+     "title": {
+      "ru": "Вид глагола"
+     },
+     "topic": "vid",
+     "path": "data/lessons/b_02/lesson.json",
+     "free": true,
+     "audio": null,
+     "bytes": 24889
+    },
+    {
+     "id": "b_03",
+     "title": {
+      "ru": "Родительный падеж"
+     },
+     "topic": "gen",
+     "path": "data/lessons/b_03/lesson.json",
+     "free": true,
+     "audio": null,
+     "bytes": 24837
     }
    ]
   }

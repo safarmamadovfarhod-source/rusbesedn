@@ -11,8 +11,9 @@ def files():
     for p in sorted(R.rglob("*")):
         if not p.is_file() or p.name in SKIP_FILES or p.suffix in (".md", ".py", ".mjs"): continue
         if any(part in SKIP_DIRS for part in p.relative_to(R).parts): continue
-        if p.parent.name == "audio" and p.suffix in (".wav", ".ogg", ".mp3"):  # в кэш — только один формат (mp3 > ogg > wav)
-            best = next((e for e in (".mp3", ".ogg", ".wav") if any(p.parent.glob("*" + e))), None)
+        if "audio" in p.relative_to(R).parts and p.suffix in (".wav", ".ogg", ".mp3"):  # в кэш — только один формат (mp3 > ogg > wav)
+            adir = next(x for x in p.parents if x.name == "audio")
+            best = next((e for e in (".mp3", ".ogg", ".wav") if any(adir.rglob("*" + e))), None)
             if p.suffix != best: continue
         out.append(p)
     return out
@@ -21,12 +22,12 @@ cj = R / "data/courses.json"; courses = json.loads(cj.read_text(encoding="utf-8"
 for c in courses["courses"]:
     for l in c["lessons"]:
         if "path" not in l: continue
-        base = pathlib.Path(l["path"]).parent / "audio"; tj = R / base / (l["id"] + "_timings.json")
-        l["audio"] = None
-        if tj.exists():
-            for ext in ("mp3", "ogg", "wav"):
-                if any((R / base).glob("*." + ext)):
-                    l["audio"] = {"base": str(base), "ext": ext, "timings": str(base / tj.name)}; break
+        base = pathlib.Path(l["path"]).parent / "audio"; adir = R / base; l["audio"] = None
+        # 4 набора (D-46): audio/<f|m>/<n|s>/<id>.<ext> и тайминги <урок>_timings_<f|m>_<n|s>.json
+        ext = next((e for e in ("mp3", "ogg", "wav") if adir.exists() and any(adir.rglob("*." + e))), None)
+        if ext:
+            sets = {v + "_" + t: str(base / (l["id"] + "_timings_" + v + "_" + t + ".json")) for v in "fm" for t in "ns" if (adir / (l["id"] + "_timings_" + v + "_" + t + ".json")).exists()}
+            l["audio"] = {"base": str(base), "ext": ext, "sets": sets}
         l["bytes"] = sum(p.stat().st_size for p in (R / pathlib.Path(l["path"]).parent).rglob("*") if p.is_file())
 cj.write_text(json.dumps(courses, ensure_ascii=False, indent=1), encoding="utf-8")
 # 2) sw.js

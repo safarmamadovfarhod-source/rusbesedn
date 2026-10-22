@@ -1,29 +1,42 @@
 import { app } from "../app.js";
 import { S, save, reset, exportJSON, importJSON, isPersistent, today } from "../store.js";
 import { t, ui, missing } from "../i18n.js";
-import { C } from "../content.js";
+import { C, setCurrent, nextLessonId, firstLessonId } from "../content.js";
+import { themePicker } from "./onboarding.js";
 import { esc } from "../util.js";
-import { top, IC } from "../ui.js";
+import { top, band, IC } from "../ui.js";
+import { isIOS, isStandalone, iosSteps } from "./home.js";
 import { log, counts } from "../analytics.js";
 import { buildReport, mailtoUrl } from "../report.js";
 import { CONFIG } from "../config.js";
+import * as audio from "../audio.js";
 const R = app.R, ACT = app.ACT;
 
 R.settings = () => {
   const mins = [5, 10, 15, 30, 60].map(m => '<button class="chip" data-act="setmin" data-v="' + m + '" aria-pressed="' + (S.settings.dailyMin === m) + '">' + m + "</button>").join("");
   const cnt = counts(), cl = Object.keys(cnt).sort().map(k => "<li>" + esc(k) + ": " + cnt[k] + "</li>").join("") || "<li>—</li>";
-  const dev = ["lang", "goal", "start", "diag", "result", "skiptest", "back", "offline"].map(id => '<button class="chip" style="border-radius:12px;min-height:44px;font-size:.95rem" data-act="dev" data-v="' + id + '">' + id + "</button>").join("");
+  const dev = ["lang", "path", "level", "theme", "goal", "ready", "diag", "diagb", "result", "resultb", "skiptest", "back", "offline"].map(id => '<button class="chip" style="border-radius:12px;min-height:44px;font-size:.95rem" data-act="dev" data-v="' + id + '">' + id + "</button>").join("");
   const confirm = app.st.confirm ? '<div class="card" role="alertdialog" style="background:#FFF5E2"><b>' + t("reset_q") + '</b><div class="row" style="margin-top:8px"><button class="btn warm" data-act="resetyes">' + t("reset_yes") + '</button><button class="btn sec" data-act="resetno">' + t("cancel") + "</button></div></div>" : "";
-  return top(t("set_title")) +
+  return band() + "<h1>" + t("n_more") + '</h1><button class="card" data-go="progress" style="display:block;text-align:left;width:100%"><b>' + t("p_title") + '</b><span class="small" style="display:block">' + t("p_more") + "</span></button>" +
+    "<h3>" + t("set_title") + "</h3>" +
     "<h3>" + t("ui_lang") + '</h3><div class="seg"><button data-act="setlang" data-v="tg" aria-pressed="' + (S.settings.uiLang === "tg") + '" lang="tg">Тоҷикӣ</button><button data-act="setlang" data-v="ru" aria-pressed="' + (S.settings.uiLang === "ru") + '" lang="ru">Русский</button></div>' +
-    "<h3>" + t("hint_lang") + '</h3><div class="seg"><button data-act="sethint" data-v="tg" aria-pressed="' + (S.settings.hintLang === "tg") + '">' + t("h_tg") + '</button><button data-act="sethint" data-v="ru" aria-pressed="' + (S.settings.hintLang === "ru") + '">' + t("h_ru") + "</button></div>" +
+    "<h3>" + t("path_h") + '</h3><div class="seg"><button data-act="settrack" data-v="a" aria-pressed="' + (S.settings.track === "a") + '">' + t("path_a_short") + '</button><button data-act="settrack" data-v="b" aria-pressed="' + (S.settings.track === "b") + '">' + t("path_b_short") + "</button></div>" +
+    (S.settings.track === "a" ? "<h3>" + t("hint_lang") + '</h3><div class="seg"><button data-act="sethint" data-v="tg" aria-pressed="' + (S.settings.hintLang === "tg") + '">' + t("h_tg") + '</button><button data-act="sethint" data-v="ru" aria-pressed="' + (S.settings.hintLang === "ru") + '">' + t("h_ru") + "</button></div>" : "") +
+    "<h3>" + t("theme_h") + '</h3><div style="display:grid;gap:8px">' + themePicker() + "</div>" +
+    "<h3>" + t("voice_h") + '</h3><div class="seg"><button data-act="setvoice" data-v="f" aria-pressed="' + (S.settings.voice !== "m") + '">' + t("v_f") + '</button><button data-act="setvoice" data-v="m" aria-pressed="' + (S.settings.voice === "m") + '">' + t("v_m") + '</button></div><p class="small">' + t("voice_note") + "</p>" +
+    "<h3>" + t("tilt_h") + '</h3><div class="seg"><button data-act="settilt" data-v="on" aria-pressed="' + (S.settings.tilt !== "off") + '">' + t("tilt_on") + '</button><button data-act="settilt" data-v="off" aria-pressed="' + (S.settings.tilt === "off") + '">' + t("tilt_off") + '</button></div><p class="small">' + t("tilt_note") + "</p>" +
     "<h3>" + t("goal_day") + '</h3><div class="chips">' + mins + "</div>" +
     "<h3>" + t("text_size") + '</h3><div class="seg"><button data-act="setsize" data-v="0" aria-pressed="' + !S.settings.large + '">' + t("sz_n") + '</button><button data-act="setsize" data-v="1" aria-pressed="' + S.settings.large + '">' + t("sz_l") + "</button></div>" +
     "<h3>" + t("offline_h") + '</h3><div class="card"><div class="li"><span class="tick on">' + IC.check + '</span><span class="grow">' + t("off_l1") + '</span></div><p class="small">' + (isPersistent() ? t("store_ok") : t("store_bad")) + "</p></div>" +
-    '<button class="btn sec" id="installbtn" data-act="install">' + t("install") + '</button><p class="small" id="installnote">' + t("install_help") + "</p>" +
+    (isStandalone() ? '<p class="small">' + t("ios_done") + "</p>" : isIOS() ? '<div class="card"><b>' + t("ios_h") + "</b>" + iosSteps() + "</div>" : '<button class="btn sec" id="installbtn" data-act="install">' + t("install") + '</button><p class="small" id="installnote">' + t("install_help") + "</p>") +
     '<button class="btn sec" data-go="report">' + t("report") + "</button>" +
     "<h3>" + t("data_h") + '</h3><div class="row" style="flex-wrap:wrap"><button class="btn sec" data-act="export">' + t("export") + '</button><label class="btn sec" style="cursor:pointer">' + t("import") + '<input id="impfile" type="file" accept="application/json,.json" style="display:none" data-act-change="import"></label></div><p class="small">' + t("data_note") + "</p>" + confirm + '<button class="btn ghost" data-act="resetask">' + t("reset") + "</button>" +
     (!CONFIG.DEV_PANEL ? '<p class="small" style="margin-top:12px">' + t("ver") + ": " + CONFIG.APP_VERSION + "</p>" : '<details class="card"><summary><b>' + t("dev_h") + "</b></summary><p class=\"small\">" + t("dev_note") + "</p><ul class=\"small\">" + cl + '</ul><p class="small">' + t("ver") + ": " + CONFIG.APP_VERSION + '</p><div class="chips" style="margin-top:8px">' + dev + "</div></details>");
+};
+ACT.setvoice = e => { S.settings.voice = e.dataset.v; save(); app.render(true); audio.playText("Здра́вствуйте", null); };
+ACT.settrack = e => {
+  const v = e.dataset.v; if (S.settings.track === v) return;
+  S.settings.track = v; S.settings.hintLang = v === "a" ? "tg" : "ru"; save(); setCurrent(nextLessonId(v) || firstLessonId()); log("path_set", { path: v }); app.render(true);
 };
 ACT.sethint = e => { S.settings.hintLang = e.dataset.v; save(); app.render(true); };
 ACT.setsize = e => { S.settings.large = e.dataset.v === "1"; save(); app.render(true); };
@@ -33,7 +46,7 @@ ACT.import = async el => { const f = el.files && el.files[0]; if (!f) return; co
 ACT.resetask = () => { app.st.confirm = true; app.render(true); };
 ACT.resetno = () => { app.st.confirm = false; app.render(true); };
 ACT.resetyes = () => { app.st.confirm = false; reset(); app.stack = []; app.go("lang", { noPush: true }); };
-ACT.dev = e => { const id = e.dataset.v; app.st.diag = { i: 0, score: 0, n: 0, fb: null, sel: null, built: [], typed: "" }; app.st.skip = { i: 0, score: 0, fb: null, sel: null, built: [], done: false }; app.stack = []; app.go(id, { noPush: true }); };
+ACT.dev = e => { const id = e.dataset.v; app.st.diag = { set: id === "diagb" ? "b" : (S.settings.track === "b" && id === "diag" ? "b" : "a"), i: 0, score: 0, n: 0, tp: {}, fb: null, sel: null, built: [], typed: "" }; if (id === "skiptest") setCurrent("a0_01"); app.st.skip = { i: 0, score: 0, fb: null, sel: null, built: [], done: false }; app.stack = []; app.go(id === "diagb" ? "diag" : id, { noPush: true }); };
 
 /* ---------- Сообщить о проблеме (D-26, D-32) ---------- */
 R.report = () => {
