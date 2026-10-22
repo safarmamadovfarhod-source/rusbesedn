@@ -5,6 +5,7 @@ import { C, setCurrent, nextLessonId, firstLessonId } from "../content.js";
 import { themePicker } from "./onboarding.js";
 import { esc } from "../util.js";
 import { top, band, IC } from "../ui.js";
+import { mascotImg } from "../pics.js";
 import { isIOS, isStandalone, iosSteps } from "./home.js";
 import { log, counts } from "../analytics.js";
 import { buildReport, mailtoUrl } from "../report.js";
@@ -17,7 +18,7 @@ R.settings = () => {
   const cnt = counts(), cl = Object.keys(cnt).sort().map(k => "<li>" + esc(k) + ": " + cnt[k] + "</li>").join("") || "<li>—</li>";
   const dev = ["lang", "path", "level", "theme", "goal", "ready", "diag", "diagb", "result", "resultb", "skiptest", "back", "offline"].map(id => '<button class="chip" style="border-radius:12px;min-height:44px;font-size:.95rem" data-act="dev" data-v="' + id + '">' + id + "</button>").join("");
   const confirm = app.st.confirm ? '<div class="card" role="alertdialog" style="background:#FFF5E2"><b>' + t("reset_q") + '</b><div class="row" style="margin-top:8px"><button class="btn warm" data-act="resetyes">' + t("reset_yes") + '</button><button class="btn sec" data-act="resetno">' + t("cancel") + "</button></div></div>" : "";
-  return band() + "<h1>" + t("n_more") + '</h1><button class="card" data-go="progress" style="display:block;text-align:left;width:100%"><b>' + t("p_title") + '</b><span class="small" style="display:block">' + t("p_more") + "</span></button>" +
+  return band() + "<h1>" + t("n_more") + '</h1><button class="card" data-go="progress" style="display:block;text-align:left;width:100%"><b>' + t("p_title") + '</b><span class="small" style="display:block">' + t("p_more") + '</span></button><button class="card" data-go="about" style="display:block;text-align:left;width:100%;margin-top:10px"><b>' + t("n_about") + '</b><span class="small" style="display:block">' + t("ab_ver", { v: CONFIG.APP_VERSION }) + "</span></button>" +
     "<h3>" + t("set_title") + "</h3>" +
     "<h3>" + t("ui_lang") + '</h3><div class="seg"><button data-act="setlang" data-v="tg" aria-pressed="' + (S.settings.uiLang === "tg") + '" lang="tg">Тоҷикӣ</button><button data-act="setlang" data-v="ru" aria-pressed="' + (S.settings.uiLang === "ru") + '" lang="ru">Русский</button></div>' +
     "<h3>" + t("path_h") + '</h3><div class="seg"><button data-act="settrack" data-v="a" aria-pressed="' + (S.settings.track === "a") + '">' + t("path_a_short") + '</button><button data-act="settrack" data-v="b" aria-pressed="' + (S.settings.track === "b") + '">' + t("path_b_short") + "</button></div>" +
@@ -29,7 +30,8 @@ R.settings = () => {
     "<h3>" + t("text_size") + '</h3><div class="seg"><button data-act="setsize" data-v="0" aria-pressed="' + !S.settings.large + '">' + t("sz_n") + '</button><button data-act="setsize" data-v="1" aria-pressed="' + S.settings.large + '">' + t("sz_l") + "</button></div>" +
     "<h3>" + t("offline_h") + '</h3><div class="card"><div class="li"><span class="tick on">' + IC.check + '</span><span class="grow">' + t("off_l1") + '</span></div><p class="small">' + (isPersistent() ? t("store_ok") : t("store_bad")) + "</p></div>" +
     (isStandalone() ? '<p class="small">' + t("ios_done") + "</p>" : isIOS() ? '<div class="card"><b>' + t("ios_h") + "</b>" + iosSteps() + "</div>" : '<button class="btn sec" id="installbtn" data-act="install">' + t("install") + '</button><p class="small" id="installnote">' + t("install_help") + "</p>") +
-    '<button class="btn sec" data-go="report">' + t("report") + "</button>" +
+    '<h3>' + t("share_h") + '</h3><button class="btn sec" data-act="share">' + t("share_btn") + '</button>' +
+    '<button class="btn sec" data-go="report" style="margin-top:10px">' + t("report") + "</button>" +
     "<h3>" + t("data_h") + '</h3><div class="row" style="flex-wrap:wrap"><button class="btn sec" data-act="export">' + t("export") + '</button><label class="btn sec" style="cursor:pointer">' + t("import") + '<input id="impfile" type="file" accept="application/json,.json" style="display:none" data-act-change="import"></label></div><p class="small">' + t("data_note") + "</p>" + confirm + '<button class="btn ghost" data-act="resetask">' + t("reset") + "</button>" +
     (!CONFIG.DEV_PANEL ? '<p class="small" style="margin-top:12px">' + t("ver") + ": " + CONFIG.APP_VERSION + "</p>" : '<details class="card"><summary><b>' + t("dev_h") + "</b></summary><p class=\"small\">" + t("dev_note") + "</p><ul class=\"small\">" + cl + '</ul><p class="small">' + t("ver") + ": " + CONFIG.APP_VERSION + '</p><div class="chips" style="margin-top:8px">' + dev + "</div></details>");
 };
@@ -43,6 +45,11 @@ ACT.setsize = e => { S.settings.large = e.dataset.v === "1"; save(); app.render(
 ACT.install = async () => { const p = app.installPrompt; if (!p) { app.toast(t("install_help")); return; } p.prompt(); try { await p.userChoice; } catch (e) { } app.installPrompt = null; app.render(true); };
 ACT.export = () => { const blob = new Blob([exportJSON()], { type: "application/json" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rs-progress-" + today() + ".json"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
 ACT.import = async el => { const f = el.files && el.files[0]; if (!f) return; const txt = await f.text(); if (importJSON(txt)) { app.toast(t("import_ok")); app.stack = []; app.go("home", { noPush: true }); } else app.toast(t("import_bad")); };
+ACT.share = async () => {
+  const url = new URL("./", location.href).href, text = t("share_text");
+  if (navigator.share) { try { await navigator.share({ title: t("app"), text, url }); log("share"); } catch (e) { /* закрыто без отправки */ } return; }
+  try { await navigator.clipboard.writeText(text + " " + url); app.toast(t("share_copied")); } catch (e) { app.toast(url); }
+};
 ACT.resetask = () => { app.st.confirm = true; app.render(true); };
 ACT.resetno = () => { app.st.confirm = false; app.render(true); };
 ACT.resetyes = () => { app.st.confirm = false; reset(); app.stack = []; app.go("lang", { noPush: true }); };
@@ -66,3 +73,15 @@ ACT.repsend = async () => {
   else { try { await navigator.clipboard.writeText(out); } catch (e) { /* текст виден в поле для ручного копирования */ } }
   r.sent = true; app.render(false);
 };
+
+/* ---------- О приложении (D-56) и политика конфиденциальности ---------- */
+const hdrBack = title => '<div class="hdr"><div class="hrow"><button class="icon-btn" data-back aria-label="' + esc(t("back")) + '">' + IC.back + '</button><h1 class="grow">' + title + "</h1></div></div>";
+R.about = () => {
+  const mail = "mailto:" + CONFIG.REPORT_TO + "?subject=" + encodeURIComponent(t("app"));
+  return hdrBack(t("n_about")) +
+    '<div class="card3 hrow"><div class="mcirc sm">' + mascotImg("hi", 74, "") + '</div><div><h2>' + t("app") + '</h2><p class="small">' + t("ab_ver", { v: CONFIG.APP_VERSION }) + "</p></div></div>" +
+    '<div class="card3"><div class="lbl-up">' + t("ab_author") + '</div><h2 style="margin-top:6px">' + esc(t("ab_name")) + '</h2><p class="small">' + t("ab_role") + '</p>' + (CONFIG.REPORT_TO ? '<a class="btn sec" style="margin-top:12px" href="' + esc(mail) + '">' + t("ab_write") + "</a>" : "") + "</div>" +
+    '<div class="card3"><div class="lbl-up">' + t("ab_data_h") + '</div><p style="margin-top:6px">' + t("ab_data") + '</p><button class="arow" data-go="privacy" style="margin-top:10px"><span>' + t("ab_privacy") + "</span>" + IC.back.replace("M15 5l-7 7 7 7", "M9 5l7 7-7 7") + "</button></div>" +
+    '<div class="card3"><div class="lbl-up">' + t("ab_thanks_h") + '</div><p style="margin-top:6px">' + t("ab_font") + "<br>" + t("ab_voice") + "</p></div>";
+};
+R.privacy = () => top(t("priv_title")) + '<div class="card3" style="display:grid;gap:12px">' + ["priv_1", "priv_2", "priv_3", "priv_4", "priv_5"].map(k => "<p>" + t(k) + "</p>").join("") + "</div>";

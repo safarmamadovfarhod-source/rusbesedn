@@ -8,6 +8,7 @@ import { band, top, steps, bowl, star, IC, playIcon } from "../ui.js";
 import { computeStreak, weekMinutes, weekGoal } from "../progress.js";
 import { dueList, review, learnedCount } from "../srs.js";
 import { log } from "../analytics.js";
+import { mascotImg, wordIcon } from "../pics.js";
 import * as audio from "../audio.js";
 
 const R = app.R, ACT = app.ACT;
@@ -61,12 +62,17 @@ R.home = () => {
     const route = '<div class="route" aria-label="' + esc(ui(courseOf(tr).title)) + '">' + all.map((l, k) => { const d = lessonDoneId(l.id), cur = nid === l.id; return '<div class="rt' + (d ? " done" : "") + (cur ? " cur" : "") + (l.path ? "" : " soon") + '"><span class="dot">' + (d ? IC.check : k + 1) + '</span><span class="lbl">' + esc(ui(l.title)) + "</span></div>"; }).join("") + "</div>";
     return band() + head + pre + '<div class="card goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + '</p><span class="badge g">' + t("streak", { n: streak }) + "</span></div></div>" + tiltBtn + route + card + tail;
   }
-  if (th === "b") { /* «Ы-талисман»: талисман, дни недели, крупная буква урока */
-    const ws = weekStart(td), wd = t("wd").split(","), days = wd.map((x, k) => { const ds = addDays(ws, k); return '<span class="wdc' + (P.days.includes(ds) ? " on" : "") + (ds === td ? " today" : "") + '"' + (ds === td ? ' aria-current="date"' : "") + ">" + x + "</span>"; }).join("");
-    const mascot = '<svg class="mascot" viewBox="0 0 80 80" role="img" aria-label="Ы"><circle cx="40" cy="42" r="34" style="fill:var(--primary);stroke:var(--ink);stroke-width:3"/><circle cx="29" cy="36" r="5" style="fill:#fff"/><circle cx="51" cy="36" r="5" style="fill:#fff"/><circle cx="30" cy="37" r="2.2" style="fill:var(--ink)"/><circle cx="52" cy="37" r="2.2" style="fill:var(--ink)"/><path d="M31 50Q40 59 49 50" style="fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round"/><rect x="46" y="54" width="26" height="24" rx="8" style="fill:var(--tea);stroke:var(--ink);stroke-width:3"/><text x="59" y="73" text-anchor="middle" font-size="19" font-weight="700" style="fill:var(--ink)" font-family="PT Sans,sans-serif">Ы</text></svg>';
-    const letter = nid ? plain(ui(C.lessons[nid].meta.title)).charAt(0).toUpperCase() : "✓";
-    const big = nid ? card.replace('<div style="width:44px;height:44px;color:var(--primary)">' + star("var(--primary)", "var(--ink)", 1.5) + "</div>", '<div class="tile">' + esc(letter) + "</div>").replace("grid-template-columns:44px 1fr", "grid-template-columns:64px 1fr") : card;
-    return band() + '<div class="row" style="flex:none;align-items:center;gap:12px">' + mascot + '<div class="grow"><h1>' + t("hello") + '</h1><span class="badge g">' + t("streak", { n: streak }) + "</span></div></div>" + pre + '<div class="wdrow" role="group" aria-label="' + t("weekgoal") + '">' + days + "</div>" + big + '<div class="card goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + "</p></div></div>" + tiltBtn + tail;
+  if (th === "b") { /* «Ы-талисман» (D-60): шапка с талисманом, дни недели, карточка урока, чаша из кода */
+    const ws = weekStart(td), wd = t("wd").split(","), tdMin = P.minutes[td] || 0, dm = S.settings.dailyMin, dpct = Math.min(100, Math.round(tdMin / dm * 100));
+    const days = wd.map((x, k) => { const ds = addDays(ws, k), on = P.days.includes(ds), cls = ds === td ? "today" : (on ? "on" : (ds > td ? "fut" : "")); return '<span class="' + cls + '"' + (ds === td ? ' aria-current="date"' : "") + ">" + x + (ds === td ? "<i></i>" : (on ? IC.check.replace("<svg", '<svg role="img" aria-label="' + t("studied") + '"') : "")) + "</span>"; }).join("");
+    const nm = (S.settings.name || "").trim(), greet = esc(nm ? t("hello_name", { name: nm }) : t("hello_plain"));
+    const hdr = '<div class="hdr"><div class="hrow"><div class="mcirc">' + mascotImg("wave", 104, "") + '</div><div class="grow"><h1>' + greet + '</h1><div class="hsub">' + t("today_min", { a: tdMin, b: dm }) + '</div><div class="hbar" role="img" aria-label="' + dpct + '%"><i style="width:' + dpct + '%"></i></div></div></div><div class="wdh" role="group" aria-label="' + t("weekgoal") + '">' + days + "</div></div>";
+    let lcard = card;
+    if (nid) {
+      const ttl = plain(ui(C.lessons[nid].meta.title)), letter = ttl.charAt(0).toUpperCase(), nTot = trackLessons(tr).length || 1, lp = Math.round(doneCount() / nTot * 100);
+      lcard = '<div class="card3"><div class="hrow"><div class="ltile" aria-hidden="true">' + esc(letter) + '</div><div class="grow"><div class="lbl-up">' + t("lesson_n", { n: lessonNo(nid) }) + "</div><h2>" + esc(ttl) + '</h2></div></div><div class="lbar" style="margin-top:14px" role="img" aria-label="' + lp + '%"><i style="width:' + lp + '%"></i></div><button class="btn go" style="margin-top:16px" data-act="startlesson" data-v="' + nid + '">' + t("continue") + "</button>" + (tr === "a" && nid === "a0_01" ? '<button class="btn ghost" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
+    }
+    return hdr + pre + lcard + '<div class="card3 goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + "</p></div></div>" + tiltBtn + tail;
   }
   /* «Чаша» (по умолчанию) */
   return band() + head + pre + '<div class="center">' + bowl(pct, t("weekgoal")) + '<p style="margin-top:6px"><b>' + t("min_of", { a: got, b: total }) + '</b></p><p class="small">' + t("weekgoal") + '</p><p class="sub" style="margin-top:4px">' + t("home_sub") + '</p><p style="margin-top:8px"><span class="badge g">' + t("streak", { n: streak }) + '</span></p><p class="small">' + t("streak_note") + "</p></div>" + tiltBtn + card + '<div class="stations">' + stations + "</div>" + tail;
@@ -93,14 +99,21 @@ ACT.revknow = e => {
   save(); app.render(false); app.scrollTop();
 };
 
-/* ---------- вкладка «Слова» ---------- */
+/* ---------- вкладка «Слова» (D-54): шапка, плитки с картинками по урокам ---------- */
+ACT.revall = () => { const q = Object.keys(S.srs).slice(0, 20); if (!q.length) { app.toast(t("rev_none")); return; } app.st.rev = { q, i: 0, shown: false, know: 0 }; app.go("review"); };
 R.words = () => {
-  const td = today(), due = dueList(S.srs, td).length, nid = nextLessonId(), vis = orderedLessons().filter(l => lessonDoneId(l.id) || l.id === nid);
+  const td = today(), due = dueList(S.srs, td).length, nid = nextLessonId(), vis = orderedLessons().filter(l => lessonDoneId(l.id) || l.id === nid), seen = Object.keys(S.srs).length;
+  const cur = nid || (vis.length ? vis[vis.length - 1].id : null), sub = cur ? t("w_sub", { n: lessonNo(cur), title: plain(ui(C.lessons[cur].meta.title)) }) : "";
+  const hdr = '<div class="hdr"><div class="hrow"><div class="grow"><h1>' + t("w_title") + "</h1>" + (sub ? '<div class="hsub">' + esc(sub) + "</div>" : "") + '</div><div class="mcirc sm">' + mascotImg("hi", 76, "") + "</div></div></div>";
+  let today_;
+  if (due) today_ = '<div class="card3" style="display:grid;gap:12px"><h3>' + t("w_today", { n: due }) + '</h3><button class="btn go" data-act="revstart">' + t("start") + "</button></div>";
+  else if (seen) today_ = '<div class="card3 empty"><div class="mcirc">' + mascotImg("win", 118, "") + "</div><h2>" + t("empty_h") + '</h2><p class="sub">' + t("empty_s") + "</p>" + (nid ? '<button class="btn go" data-act="startlesson" data-v="' + nid + '">' + t("next_lesson") + "</button>" : "") + '<button class="btn sec" data-act="revall">' + t("empty_again") + "</button></div>";
+  else today_ = '<div class="card3"><h3>' + t("w_today", { n: 0 }) + '</h3><p class="sub">' + t("rev_none") + "</p></div>";
   const groups = vis.map(l => {
-    const L = C.lessons[l.id], words = L.data.words.filter(w => w.type !== "service");
-    return "<h3>" + esc(ui(L.meta.title)) + '</h3><div class="card" style="padding:4px 14px">' + words.map(w => '<button class="li" style="width:100%;border:0;background:transparent;text-align:left;cursor:pointer" data-act="word" data-v="' + esc(norm(w.ru)) + '"><span class="grow"><b>' + esc(w.ru) + '</b><span class="small">' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + '</span></span><span class="badge ' + (S.srs[w.id] ? "g" : "") + '">' + (S.srs[w.id] ? t("w_inrev") : t("w_new")) + "</span></button>").join("") + "</div>";
+    const L = C.lessons[l.id], words = L.data.words.filter(w => w.type !== "service"), got = words.filter(w => S.srs[w.id]).length, pc = words.length ? Math.round(got / words.length * 100) : 0;
+    return '<div class="lh"><h3>' + esc(ui(L.meta.title)) + '</h3><span class="small">' + t("w_prog", { a: got, b: words.length }) + '</span></div><div class="lbar" role="img" aria-label="' + pc + '%"><i style="width:' + pc + '%"></i></div><div class="wgrid">' + words.map(w => { const rep = !!S.srs[w.id]; return '<button class="wtile" data-act="word" data-v="' + esc(norm(w.ru)) + '"><span class="dot' + (rep ? " rep" : "") + '" role="img" aria-label="' + (rep ? t("w_rep") : t("w_new")) + '"></span><span class="wi">' + wordIcon(w) + "</span><b>" + esc(w.ru) + '</b><span class="small">' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + "</span></button>"; }).join("") + "</div>";
   }).join("");
-  return band() + "<h1>" + t("w_title") + '</h1><div class="card" style="display:grid;gap:10px"><h3>' + t("w_today", { n: due }) + "</h3>" + (due ? '<button class="btn warm" data-act="revstart">' + t("start") + "</button>" : '<p class="sub">' + t("rev_none") + "</p>") + "</div>" + groups;
+  return hdr + today_ + groups;
 };
 
 /* ---------- вкладка «Диалоги» ---------- */

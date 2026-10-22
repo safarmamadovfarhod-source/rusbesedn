@@ -10,11 +10,22 @@ export const PICS = {
   p5: S(person(60, '<circle cx="56" cy="27" r="1.8" fill="#14302E"/><circle cx="64" cy="27" r="1.8" fill="#14302E"/><path d="M55 35h10" stroke="#14302E" stroke-width="2.5" stroke-linecap="round"/>') + '<path d="M82 24c0-10 16-10 16 0 0 7-8 6-8 14" fill="none" stroke="#B3224B" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="46" r="3.2" fill="#B3224B"/>')
 };
 
-/* Значок слова для окна слова: для слов, которые можно нарисовать, — рисунок; для остальных — буква на плитке (свой знак, не эмодзи). */
-const WORD_PIC = { w01: "p1", w10: "p2", w11: "p3", w05: "p4", w08: "p5" };
-export function wordIcon(w) {
-  const k = w && WORD_PIC[w.id];
-  if (k && PICS[k]) return PICS[k];
+/* Значок слова: картинка (WebP в img/) для слов, которые можно нарисовать; для остальных — буква на плитке (свой знак, не эмодзи). */
+const WORD_IMG = {
+  w01: "ic01", w10: "ic02", w11: "ic03", w05: "ic04",
+  b_01_w01: "ic05", b_01_w02: "ic06", b_01_w03: "ic07", b_01_w04: "ic08", b_01_w05: "ic09", b_01_w06: "ic09", b_01_w07: "ic10", b_01_w08: "ic11", b_01_w11: "ic24", b_01_w12: "ic19", b_01_w13: "ic19",
+  b_02_w11: "ic22", b_02_w12: "ic22", b_02_w13: "ic21", b_02_w14: "ic12",
+  b_03_w01: "ic18", b_03_w02: "ic05", b_03_w03: "ic13", b_03_w04: "ic13", b_03_w05: "ic14", b_03_w06: "ic14", b_03_w07: "ic15", b_03_w08: "ic15", b_03_w09: "ic23", b_03_w10: "ic22", b_03_w11: "ic16", b_03_w12: "ic17", b_03_w13: "ic20", b_03_w14: "ic16"
+};
+export const wordImgSrc = w => { const k = w && WORD_IMG[w.id]; return k ? "img/" + k + ".webp" : null; };
+export const MASCOT = { hi: "m01", wave: "m02", up: "m03", think: "m04", win: "m05", sleep: "m06" };
+export const mascotImg = (pose, size, alt) => '<img class="mascot-img" src="img/' + MASCOT[pose || "hi"] + '.webp" width="' + (size || 96) + '" height="' + (size || 96) + '" alt="' + (alt || "") + '"' + (alt ? "" : ' aria-hidden="true"') + ' decoding="async">';
+export const letterTile = w => {
   const ch = w && w.ru ? String(w.ru).replace(/\u0301/g, "").trim().charAt(0).toUpperCase() : "?";
   return '<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="14" fill="#fff" stroke="#0D7C76" stroke-width="3"/><text x="32" y="43" text-anchor="middle" font-size="30" font-weight="700" fill="#0D7C76" font-family="PT Sans, sans-serif">' + ch + "</text></svg>";
+};
+export function wordIcon(w) {
+  const src = wordImgSrc(w);
+  if (src) return '<img src="' + src + '" alt="" aria-hidden="true" style="width:100%;height:100%;object-fit:contain" decoding="async">';
+  return letterTile(w);
 }

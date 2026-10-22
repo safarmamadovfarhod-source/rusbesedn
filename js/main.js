@@ -7,6 +7,7 @@ import { log, logError } from "./analytics.js";
 import * as audio from "./audio.js";
 import { nav } from "./nav.js";
 import { bowl } from "./ui.js";
+import { mascotImg } from "./pics.js";
 import { startTilt, askTilt, setTilt, syncCup, enabled } from "./cup.js";
 import "./screens/onboarding.js";
 import "./screens/home.js";
@@ -62,7 +63,7 @@ const SPLASH_MS = 1400, AWAY_MS = 5 * 60 * 1000;
 function showSplash() {
   if ($("#splash")) return;
   const d = document.createElement("div"); d.id = "splash"; d.setAttribute("role", "presentation");
-  d.innerHTML = bowl(70, "") + "<b>" + t("app") + "</b>"; $("#phone").appendChild(d);
+  d.innerHTML = '<div class="sp-wrap">' + mascotImg("wave", 150, "") + bowl(70, "") + "</div><b>" + t("app") + "</b>"; $("#phone").appendChild(d);
   const hide = () => { if (!d.isConnected) return; d.classList.add("out"); setTimeout(() => d.remove(), 260); };
   d.addEventListener("click", hide); setTimeout(hide, SPLASH_MS); syncCup();
 }

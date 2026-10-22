@@ -137,3 +137,57 @@ body:not(.ready) .view{opacity:.6}
 #splash b{font-size:1.4rem;color:var(--primary-d)}
 @keyframes splashin{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){#splash,#splash.out{animation:none;transition:none}}
+
+/* ===== 0.3.2: талисман, шапки, плитки слов, «пилюля» в меню (D-54, D-60) ===== */
+.hdr{margin:-18px -18px 0;padding:16px 18px 20px;background:var(--primary);color:#fff;border-radius:0 0 30px 30px;flex:none;display:flex;flex-direction:column;gap:12px}
+.hdr h1{color:#fff;font-size:1.5rem}
+.hdr .hsub{color:#E4E5FF;font-size:1rem}
+.hrow{display:flex;align-items:center;gap:12px}
+.mcirc{flex:none;width:112px;height:112px;border-radius:50%;background:#E7E8FF;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.mcirc.sm{width:84px;height:84px}
+.mcirc img{width:92%;height:92%;object-fit:contain}
+.hbar{height:10px;border-radius:5px;background:rgba(0,0,0,.28);margin-top:10px;overflow:hidden}
+.hbar i{display:block;height:100%;border-radius:5px;background:var(--tea)}
+.wdh{display:flex;gap:6px}
+.wdh span{flex:1;min-height:54px;border-radius:16px;background:rgba(255,255,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.8rem;color:#fff;gap:2px}
+.wdh span.on svg{width:18px;height:18px;stroke:var(--tea);fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.wdh span.today{background:var(--tea);color:var(--ink);font-weight:700}
+.wdh span.today i{width:8px;height:8px;border-radius:4px;background:var(--ink);margin-top:2px}
+.wdh span.fut{background:rgba(0,0,0,.22);color:#E4E5FF}
+.card3{background:var(--surface);border-radius:26px;padding:16px 18px;border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn.go{background:var(--tea);color:var(--ink);box-shadow:0 4px 0 var(--tea-d);border-radius:18px;min-height:56px;font-size:1.15rem}
+.btn.go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--tea-d)}
+.ltile{flex:none;width:64px;height:64px;border-radius:20px;background:var(--tint);display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:700;color:var(--primary)}
+.lbar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.lbar i{display:block;height:100%;background:var(--primary);border-radius:5px}
+.lh{display:flex;align-items:center;gap:10px;margin-top:6px}
+.lh+.lbar{margin-top:-6px}
+.lh h3{flex:1}
+.lh .small{flex:none}
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wtile{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px 10px;border-radius:20px;border:2px solid var(--line);background:var(--surface);box-shadow:0 3px 0 var(--line);cursor:pointer;text-align:center;min-height:132px}
+.wtile .wi{width:64px;height:64px;padding:5px;border-radius:18px;background:var(--tint);display:flex;align-items:center;justify-content:center}
+.wtile b{font-size:1.1rem;line-height:1.15}
+.wtile .small{font-size:.8rem;line-height:1.2}
+.wtile .dot{position:absolute;top:10px;right:10px;width:12px;height:12px;border-radius:50%;background:#FFC93C;border:2px solid #fff;box-shadow:0 0 0 1px #B88700}
+.wtile .dot.rep{background:#0D7C76;box-shadow:0 0 0 1px #0A5F5A}
+.nav button{min-height:72px;gap:4px}
+.nav .pill{width:60px;height:34px;border-radius:17px;display:flex;align-items:center;justify-content:center}
+.nav button[aria-current=page] .pill{background:var(--primary)}
+.nav button[aria-current=page] svg{stroke:#fff}
+.nav button[aria-current=page] .pill svg circle{fill:#fff}
+.nav button[aria-current=page]{color:var(--primary-d)}
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.empty .mcirc{width:128px;height:128px}
+.mascot-img{display:block}
+.arow{display:flex;align-items:center;justify-content:space-between;min-height:48px;border-top:2px solid var(--tint);font-weight:700;color:var(--primary-d);background:transparent;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;cursor:pointer;font-size:1rem}
+.arow svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.lbl-up{font-size:.85rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+/* заставка: чаша кодом качается, талисман выглядывает из-за края (D-55) */
+#splash .sp-wrap{position:relative;width:180px;display:flex;flex-direction:column;align-items:center;transform-origin:50% 90%;animation:rock 1.1s ease-in-out infinite}
+#splash .sp-wrap img{width:150px;height:150px;margin-bottom:-64px;position:relative;z-index:0}
+#splash .sp-wrap .bowl{position:relative;z-index:1}
+#splash .sp-wrap .bowl>g:first-of-type{display:none}
+@keyframes rock{0%,100%{transform:rotate(-3.5deg)}50%{transform:rotate(3.5deg)}}
+@media (prefers-reduced-motion:reduce){#splash .sp-wrap{animation:none}}
+a.btn{text-decoration:none}

@@ -48,9 +48,11 @@ ACT.settheme = e => { S.settings.theme = e.dataset.v; save(); app.applyTheme && 
 /* 5. минуты */
 R.goal = () => {
   const chips = [5, 10, 15, 30, 60].map(m => '<button class="chip" data-act="setmin" data-v="' + m + '" aria-pressed="' + (S.settings.dailyMin === m) + '">' + m + " " + t("min") + "</button>").join("");
-  return obTop(5, t("ob_min_t")) + '<div class="chips">' + chips + '</div><p class="small">' + t("ob_min_s") + "</p>" + nextBtn(true);
+  return obTop(5, t("ob_min_t")) + '<div class="chips">' + chips + '</div><p class="small">' + t("ob_min_s") + '</p><h3 style="margin-top:6px">' + t("name_q") + '</h3><input id="nameinp" class="inp" type="text" maxlength="30" autocomplete="given-name" enterkeyhint="done" placeholder="' + esc(t("name_ph")) + '" aria-label="' + esc(t("name_q")) + '" value="' + esc(S.settings.name || "") + '" data-act-change="setname"><p class="small">' + t("name_note") + "</p>" + nextBtn(true);
 };
-ACT.setmin = e => { S.settings.dailyMin = +e.dataset.v; save(); app.render(true); };
+const keepName = () => { const el = document.getElementById("nameinp"); if (el) { S.settings.name = el.value.replace(/\s+/g, " ").trim().slice(0, 30); save(); } };
+ACT.setname = () => keepName();
+ACT.setmin = e => { keepName(); S.settings.dailyMin = +e.dataset.v; save(); app.render(true); };
 ACT.setrh = e => { S.settings.rhythm = e.dataset.v; save(); app.render(true); };
 
 /* 6. готово */
@@ -60,7 +62,7 @@ const firstLessonText = () => {
 };
 R.ready = () => bandless() + '<div class="grow"></div><h1>' + t("ob_done") + '</h1><div class="card"><b>' + firstLessonText() + '</b><p class="small">' + t(S.settings.track === "a" ? "ob_note_a" : "ob_note_b") + '</p><p class="small">' + t("ob_goal", { n: S.settings.dailyMin * 6 }) + '</p><p class="small">' + t("ob_look") + t("th_" + S.settings.theme) + '</p></div><button class="btn" data-act="obstart">' + t("ob_start") + '</button><button class="btn ghost" data-act="obagain">' + t("ob_again") + '</button><div class="grow"></div>';
 const bandless = () => steps(6, 5);
-ACT.obnext = () => { const nx = { path: "level", level: "theme", theme: "goal", goal: "ready" }[app.cur]; if (nx) app.go(nx); };
+ACT.obnext = () => { keepName(); const nx = { path: "level", level: "theme", theme: "goal", goal: "ready" }[app.cur]; if (nx) app.go(nx); };
 ACT.obagain = () => { app.stack = []; S.settings.uiLang = null; S.settings.level = null; app.st.ob = {}; save(); app.go("lang", { noPush: true }); };
 ACT.obstart = () => {
   const a = S.settings.track === "a", lv = S.settings.level;
