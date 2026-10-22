@@ -58,4 +58,4 @@ python3 tools/validate_lesson.py                    # проверка форм�
 
 ## Структура
 `index.html`, `manifest.webmanifest`, `sw.js` (генерируется), `css/`, `js/` (модули и экраны), `data/` (i18n, курсы, диагностика, уроки), `fonts/` (PT Sans, лицензия OFL), `icons/`.
-Версия приложения: `js/config.js` (`APP_VERSION`).
+Версия приложения: `js/config.js` (`APP_VERSION`). 
