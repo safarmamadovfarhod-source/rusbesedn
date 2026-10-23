@@ -1,7 +1,7 @@
 import { app } from "../app.js";
 import { S, save, today, now } from "../store.js";
 import { t, ui, hint } from "../i18n.js";
-import { C, findWord, findGrammar, isName, exById, wordById, nextLessonId } from "../content.js";
+import { C, findWord, findGrammar, isName, exById, wordById, nextLessonId, setCurrent } from "../content.js";
 import { esc, norm, plain, shuffle, permOf, permIdx } from "../util.js";
 import { band, top, steps, bowl, fbCard, playIcon, IC } from "../ui.js";
 import { PICS, wordIcon } from "../pics.js";
@@ -81,9 +81,20 @@ ACT.wadd = e => { addCard(S.srs, e.dataset.v, today()); save(); app.render(true)
 
 /* ---------- упражнения по lesson.flow ---------- */
 /* класс варианта: выбранный — good/soft; после ошибки правильный вариант тоже подсвечивается зелёным */
+/* образец «Меня зовут …» с именем человека, если он его указал (0.3.4, аудит М6) */
+const refFor = r => { const nm = (S.settings.name || "").trim(); return nm ? String(r).replace("А́нна", nm) : r; };
+const lowFirst = x => { const s = String(x || ""); return s.charAt(0).toLowerCase() + s.slice(1); };
 const optCls = (E, v, isRight) => E.sel === v ? (E.fb && E.fb.ok ? " good" : " soft") : (E.fb && isRight ? " good right" : "");
 const newEx = i => ({ i, fb: null, sel: null, built: [], lb: [], typed: "", shown: false });
-ACT.exstart = () => { app.st.ex = Object.assign(newEx(0), { res: {} }); log("lesson_start", { lesson: lid() }); app.go("exer"); };
+/* место в уроке сохраняется после каждого ответа (0.3.4, аудит В7): звонок или перезагрузка не сбрасывают урок */
+const saveSpot = i => { S.resume = { l: lid(), i, res: app.st.ex ? app.st.ex.res : {}, d: today() }; save(); };
+export const resumeOf = id => (S.resume && S.resume.l === id && !(S.progress.lessons[id] && S.progress.lessons[id].status === "done")) ? S.resume : null;
+ACT.exstart = () => {
+  const r = resumeOf(lid()), n = C.lesson.flow.length;
+  if (r && r.i > 0) { app.st.ex = Object.assign(newEx(Math.min(r.i, n - 1)), { res: r.res || {} }); log("lesson_resume", { lesson: lid(), item: String(r.i) }); if (r.i >= n) { app.st.shadow = { i: 0, step: 0 }; app.go("shadow"); return; } app.go("exer"); return; }
+  app.st.ex = Object.assign(newEx(0), { res: {} }); log("lesson_start", { lesson: lid() }); app.go("exer");
+};
+ACT.resume = e => { setCurrent(e.dataset.v); app.st.lessonStart = now(); ACT.exstart(); };
 const relatedWords = ex => {
   const src = ex.type === "builder" ? ex.answer : ex.type === "choice" ? ex.options[ex.answer] : ex.type === "dictation" ? ex.answer : ex.type === "pictures" ? "" : "";
   const ids = new Set(); plain(src).split(/\s+/).forEach(x => { const w = findWord(norm(x)); if (w) ids.add(w.id); }); if (ex.type === "pictures" || ex.type === "meaning") ids.add(ex.word); return [...ids];
@@ -92,8 +103,8 @@ R.exer = () => {
   const E = app.st.ex, flow = C.lesson.flow, ex = exById(flow[E.i]);
   let body = "";
   const q = o => "<h2>" + esc(ui(o)) + "</h2>";
-  if (ex.type === "choice") body = q({ ru: ex.q_ru, tg: ex.q_tg }) + '<div style="display:grid;gap:8px">' + permIdx(E, "p", ex.options.length).map(i => '<button class="choice' + optCls(E, i, i === ex.answer) + '" data-act="exans" data-v="' + i + '">' + esc(ex.options[i]) + "</button>").join("") + "</div>";
-  else if (ex.type === "truefalse") body = "<h2>" + t("tf_title") + '</h2><div class="card"><p style="font-size:1.15rem">' + esc(hint({ ru: ex.ru, tg: ex.tg })) + '</p></div><div class="row"><button class="choice' + optCls(E, "t", ex.answer === true) + '" data-act="exans" data-v="t">' + t("true_") + '</button><button class="choice' + optCls(E, "f", ex.answer === false) + '" data-act="exans" data-v="f">' + t("false_") + "</button></div>";
+  if (ex.type === "choice") body = q({ ru: ex.q_ru, tg: ex.q_tg }) + '<div style="display:grid;gap:8px">' + permIdx(E, "p", ex.options.length).map(i => '<button class="choice' + optCls(E, i, i === ex.answer) + '" data-act="exans" data-v="' + i + '">' + esc(ex.options[i]) + (S.settings.hintLang === "tg" && ex.options_tg && ex.options_tg[i] ? '<span class="tr" style="display:block">' + esc(ex.options_tg[i]) + "</span>" : "") + "</button>").join("") + "</div>";
+  else if (ex.type === "truefalse") body = "<h2>" + t("tf_title") + '</h2><div class="card"><p style="font-size:1.25rem;font-weight:700" lang="ru">' + esc(ex.ru) + "</p>" + (S.settings.hintLang === "tg" && ex.tg ? '<p class="tr" style="margin-top:4px">' + esc(ex.tg) + "</p>" : "") + '</div><div class="row"><button class="choice' + optCls(E, "t", ex.answer === true) + '" data-act="exans" data-v="t">' + t("true_") + '</button><button class="choice' + optCls(E, "f", ex.answer === false) + '" data-act="exans" data-v="f">' + t("false_") + "</button></div>";
   else if (ex.type === "builder") {
     const av = permOf(E, "p", ex.ru_tokens, ex.answer.split(" ")); body = "<h2>" + t("ex_build") + '</h2><p class="small">' + esc(hint({ ru: ex.hint_ru, tg: ex.hint_tg }) || "") + '</p><div class="card" style="min-height:64px;display:flex;flex-wrap:wrap;gap:8px;align-items:center" aria-live="polite">' + (E.built.map((w, i) => '<button class="chip" aria-pressed="true" data-act="unbuild" data-v="' + i + '">' + esc(w) + "</button>").join("") || '<span class="small">…</span>') + '</div><div class="chips">' + av.map(w => { const u = E.built.includes(w); return '<button class="chip' + (u ? " used" : "") + '" data-act="build" data-v="' + esc(w) + '"' + (u ? " disabled" : "") + ">" + esc(w) + "</button>"; }).join("") + "</div>" + (E.fb ? "" : '<button class="btn sec" data-act="excheck">' + t("check") + "</button>");
   } else if (ex.type === "dictation") {
@@ -105,10 +116,10 @@ R.exer = () => {
     body = "<h2>" + t("ex_mean") + '</h2><div class="card center"><h2 style="font-size:2rem">' + esc(mw.ru) + '</h2><button class="btn sec" style="margin-top:10px" data-act="exsay" data-v="' + esc(mw.ru) + '" data-id="' + esc(mw.audio) + '">' + playIcon(18, "var(--primary-d)") + t("listen") + '</button></div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + optCls(E, w.id, w.id === ex.word) + '" data-act="exans" data-v="' + w.id + '">' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + "</button>").join("") + "</div>";
   } else if (ex.type === "pictures") {
     const opts = permOf(E, "p", ex.options).map(id => wordById(id));
-    body = "<h2>" + t("ex_pic") + '</h2><div class="pic" style="width:100%;height:150px;border-radius:18px" role="img" aria-label="' + t("ex_pic") + '">' + PICS[ex.id] + '</div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + optCls(E, w.id, w.id === ex.word) + '" data-act="exans" data-v="' + w.id + '">' + esc(w.ru) + "</button>").join("") + "</div>";
+    body = "<h2>" + t("ex_pic") + '</h2><div class="pic" style="width:100%;height:150px;border-radius:18px" role="img" aria-label="' + t("ex_pic") + '">' + PICS[ex.id] + '</div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + optCls(E, w.id, w.id === ex.word) + '" data-act="exans" data-v="' + w.id + '">' + esc(lowFirst(w.ru)) + "</button>").join("") + "</div>";
   } else { /* free */
     body = "<h2>" + esc(ui({ ru: ex.q_ru, tg: ex.q_tg })) + '</h2><textarea id="free" placeholder="' + t("dict_ph") + '" aria-label="' + esc(ui({ ru: ex.q_ru, tg: ex.q_tg })) + '" lang="ru"></textarea><p class="small">' + t("kb_note") + '</p><p class="small">' + esc(hint({ ru: ex.note_ru, tg: ex.note_tg })) + "</p>" +
-      (E.shown ? '<div class="card" style="background:var(--tint)"><p class="small"><b>' + t("ex_ref_h") + '</b></p><h3 style="margin-top:4px">' + esc(ex.reference) + "</h3></div>" + (E.fb ? "" : "<h3>" + t("ex_self") + '</h3><div class="row"><button class="btn" data-act="exself" data-v="1">' + t("ex_same") + '</button><button class="btn sec" data-act="exself" data-v="0">' + t("ex_redo") + "</button></div>") : '<button class="btn sec" data-act="exref">' + t("ex_ref") + "</button>");
+      (E.shown ? '<div class="card" style="background:var(--tint)"><p class="small"><b>' + t("ex_ref_h") + '</b></p><h3 style="margin-top:4px">' + esc(refFor(ex.reference)) + "</h3></div>" + (E.fb ? "" : "<h3>" + t("ex_self") + '</h3><div class="row"><button class="btn" data-act="exself" data-v="1">' + t("ex_same") + '</button><button class="btn sec" data-act="exself" data-v="0">' + t("ex_redo") + "</button></div>") : '<button class="btn sec" data-act="exref">' + t("ex_ref") + "</button>");
   }
   let fb = "";
   if (E.fb) { const expl = ex.expl_ru ? esc(hint({ ru: ex.expl_ru, tg: ex.expl_tg })) : ""; fb = fbCard(E.fb.ok, (E.fb.ok ? t("fb_ok") : (E.fb.right ? t("fb_soft") + esc(E.fb.right) : t("ex_redo"))) + (expl ? '<span class="small" style="display:block;font-weight:400;margin-top:4px">' + expl + "</span>" : "")) + '<button class="btn" data-act="exnext">' + t("next") + "</button>"; }
@@ -119,7 +130,7 @@ function exFinish(ex, ok, right) {
   const E = app.st.ex; if (E.fb) return; E.fb = { ok, right: right || "" }; E.res[ex.id] = ok;
   log("exercise_answer", { item: ex.id, ok, kind: ex.type }); if (ex.type === "dictation") log("dictation_submit", { item: ex.id, ok });
   if (!ok) relatedWords(ex).forEach(id => { if (S.srs[id]) review(S.srs, id, false, today()); else addCard(S.srs, id, today()); });
-  save(); app.render(true);
+  saveSpot(E.i + 1); app.render(true);
 }
 const curEx = () => exById(C.lesson.flow[app.st.ex.i]);
 ACT.exans = e => { const ex = curEx(), E = app.st.ex; if (E.fb) return; const v = e.dataset.v; E.sel = ex.type === "choice" ? +v : v;
@@ -167,7 +178,7 @@ export function completeLesson() {
   const res = (app.st.ex && app.st.ex.res) || {}, vals = Object.values(res), correct = vals.filter(Boolean).length;
   const started = app.st.lessonStart || now(), mins = Math.max(1, Math.min(30, Math.round((now() - started) / 60000)));
   const xp = xpForLesson(correct, vals.length), td = today();
-  P.lessons[id] = { status: "done", ts: td, score: correct, total: vals.length, xp, rating: null };
+  P.lessons[id] = { status: "done", ts: td, score: correct, total: vals.length, xp, rating: null }; if (S.resume && S.resume.l === id) S.resume = null;
   P.xp += xp; P.minutes[td] = (P.minutes[td] || 0) + mins; if (!P.days.includes(td)) P.days.push(td);
   (C.lesson.review.words || []).forEach(w => addCard(S.srs, w, td));
   log("lesson_complete", { lesson: id, score: correct, n: vals.length }); save();

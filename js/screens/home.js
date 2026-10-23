@@ -10,9 +10,12 @@ import { dueList, review, learnedCount } from "../srs.js";
 import { log } from "../analytics.js";
 import { mascotImg, wordIcon } from "../pics.js";
 import * as audio from "../audio.js";
+import { resumeOf } from "./lesson.js";
 
 const R = app.R, ACT = app.ACT;
 const goLabel = () => doneCount() ? t("continue") : t("start");
+/* кнопка урока: «Продолжить с задания N», если урок прерван (0.3.4) */
+const goBtn = (nid, cls, style) => { const r = resumeOf(nid); return r && r.i > 0 ? '<button class="' + cls + '"' + style + ' data-act="resume" data-v="' + nid + '">' + t("cont_from", { n: r.i + 1 }) + "</button>" : '<button class="' + cls + '"' + style + ' data-act="startlesson" data-v="' + nid + '">' + goLabel() + "</button>"; };
 const doneCount = () => trackLessons(track()).filter(l => lessonDoneId(l.id)).length;
 const lessonNo = id => orderedLessons(track()).findIndex(l => l.id === id) + 1;
 
@@ -49,7 +52,7 @@ R.home = () => {
   let card;
   if (nid) {
     const L = C.lessons[nid], meta = L.meta, can = ui(L.data.passport.can_do[0]);
-    card = '<div class="card" style="display:grid;grid-template-columns:44px 1fr;gap:12px"><div style="width:44px;height:44px;color:var(--primary)">' + star("var(--primary)", "var(--ink)", 1.5) + '</div><div><small class="small">' + t("lesson_n", { n: lessonNo(nid) }) + "</small><h3>" + esc(ui(meta.title)) + '</h3><p class="sub">' + esc(can) + '</p></div><button class="btn warm" style="grid-column:1/-1" data-act="startlesson" data-v="' + nid + '">' + goLabel() + "</button>" +
+    card = '<div class="card" style="display:grid;grid-template-columns:44px 1fr;gap:12px"><div style="width:44px;height:44px;color:var(--primary)">' + star("var(--primary)", "var(--ink)", 1.5) + '</div><div><small class="small">' + t("lesson_n", { n: lessonNo(nid) }) + "</small><h3>" + esc(ui(meta.title)) + '</h3><p class="sub">' + esc(can) + '</p></div>' + goBtn(nid, "btn warm", ' style="grid-column:1/-1"') + "" +
       (tr === "a" && nid === "a0_01" ? '<button class="btn ghost" style="grid-column:1/-1" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
   } else {
     const last = orderedLessons(tr).slice(-1)[0];
@@ -58,11 +61,13 @@ R.home = () => {
   const off = typeof navigator !== "undefined" && navigator.onLine === false ? '<button class="card" data-go="offline" style="display:block;text-align:left"><b>' + t("off_title") + '</b><span class="small" style="display:block">' + t("off_banner") + "</span></button>" : "";
   const th = S.settings.theme || "c", revBtn = nid && due ? '<button class="btn sec" data-act="revstart">' + t("rev_btn", { n: due }) + "</button>" : "";
   const tiltBtn = permissionPending() ? '<button class="btn ghost" data-act="tiltask">' + t("tilt_ask") + '</button><p class="small center">' + t("tilt_note") + "</p>" : "";
-  const tail = revBtn + strengthsCard() + progressCard(), pre = off + iosCard();
+  /* напоминание о резервной копии: если браузер не обещал хранить данные постоянно (0.3.4) */
+  const backup = (S.persist === false && doneCount() > 0 && (!S.exportTs || diffDays(td, S.exportTs) >= 14)) ? '<div class="card" role="note"><b>' + t("backup_h") + '</b><p class="small">' + t("backup_s") + '</p><button class="btn sec" data-act="export">' + t("export") + "</button></div>" : "";
+  const tail = revBtn + strengthsCard() + backup + progressCard(), pre = off + iosCard();
   const nm0 = (S.settings.name || "").trim(), head = '<div class="top" style="margin-top:-2px"><h1 class="grow">' + esc(nm0 ? t("hello_name", { name: nm0 }) : t("hello")) + "</h1></div>";
   if (th === "a") { /* «Путь»: цель недели строкой, карта пути, карточка урока */
     const route = '<div class="route" aria-label="' + esc(ui(courseOf(tr).title)) + '">' + all.map((l, k) => { const d = lessonDoneId(l.id), cur = nid === l.id; return '<div class="rt' + (d ? " done" : "") + (cur ? " cur" : "") + (l.path ? "" : " soon") + '"><span class="dot">' + (d ? IC.check : k + 1) + '</span><span class="lbl">' + esc(ui(l.title)) + "</span></div>"; }).join("") + "</div>";
-    return band() + head + pre + '<div class="card goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + '</p><span class="badge g">' + t("streak", { n: streak }) + "</span></div></div>" + tiltBtn + route + card + tail;
+    return band() + head + pre + '<div class="card goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + '</p><span class="badge g">' + t("streak", { n: streak }) + "</span></div></div>" + card + route + tiltBtn + tail;
   }
   if (th === "b") { /* «Ы-талисман» (D-60): шапка с талисманом, дни недели, карточка урока, чаша из кода */
     const ws = weekStart(td), wd = t("wd").split(","), tdMin = P.minutes[td] || 0, dm = S.settings.dailyMin, dpct = Math.min(100, Math.round(tdMin / dm * 100));
@@ -72,12 +77,12 @@ R.home = () => {
     let lcard = card;
     if (nid) {
       const ttl = plain(ui(C.lessons[nid].meta.title)), letter = ttl.charAt(0).toUpperCase(), nTot = trackLessons(tr).length || 1, lp = Math.round(doneCount() / nTot * 100);
-      lcard = '<div class="card3"><div class="hrow"><div class="ltile" aria-hidden="true">' + esc(letter) + '</div><div class="grow"><div class="lbl-up">' + t("lesson_n", { n: lessonNo(nid) }) + "</div><h2>" + esc(ttl) + '</h2></div></div><div class="lbar" style="margin-top:14px" role="img" aria-label="' + lp + '%"><i style="width:' + lp + '%"></i></div><button class="btn go" style="margin-top:16px" data-act="startlesson" data-v="' + nid + '">' + goLabel() + "</button>" + (tr === "a" && nid === "a0_01" ? '<button class="btn ghost" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
+      lcard = '<div class="card3"><div class="hrow"><div class="ltile" aria-hidden="true">' + esc(letter) + '</div><div class="grow"><div class="lbl-up">' + t("lesson_n", { n: lessonNo(nid) }) + "</div><h2>" + esc(ttl) + '</h2></div></div><div class="lbar" style="margin-top:14px" role="img" aria-label="' + lp + '%"><i style="width:' + lp + '%"></i></div>' + goBtn(nid, "btn go", ' style="margin-top:16px"') + "" + (tr === "a" && nid === "a0_01" ? '<button class="btn ghost" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
     }
     return hdr + pre + lcard + '<div class="card3 goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + "</p></div></div>" + tiltBtn + tail;
   }
   /* «Чаша» (по умолчанию) */
-  return band() + head + pre + '<div class="center">' + bowl(pct, t("weekgoal")) + '<p style="margin-top:6px"><b>' + t("min_of", { a: got, b: total }) + '</b></p><p class="small">' + t("weekgoal") + '</p>' + (got ? "" : '<p class="sub" style="margin-top:4px">' + t("home_sub") + "</p>") + '<p style="margin-top:8px"><span class="badge g">' + t("streak", { n: streak }) + '</span></p><p class="small">' + t("streak_note") + "</p></div>" + tiltBtn + card + '<div class="stations">' + stations + "</div>" + tail;
+  return band() + head + pre + card + '<div class="center">' + bowl(pct, t("weekgoal")) + '<p style="margin-top:6px"><b>' + t("min_of", { a: got, b: total }) + '</b></p><p class="small">' + t("weekgoal") + '</p>' + (got ? "" : '<p class="sub" style="margin-top:4px">' + t("home_sub") + "</p>") + '<p style="margin-top:8px"><span class="badge g">' + t("streak", { n: streak }) + '</span></p><p class="small">' + t("streak_note") + "</p></div>" + '<div class="stations">' + stations + "</div>" + tiltBtn + tail;
 };
 
 /* ---------- повторение слов ---------- */

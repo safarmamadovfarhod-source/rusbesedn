@@ -1,5 +1,5 @@
 /* Сервис-воркер: офлайн-режим. Версия и список файлов подставляются tools/build_manifest.py */
-const VERSION = "4f2c29b782";
+const VERSION = "ccd8843d72";
 const CACHE = "rs-" + VERSION;
 const PRECACHE = [
  "./",

@@ -101,3 +101,11 @@ test("отчёт: журнал только по согласию, письмо 
   assert.ok(!/@|телефон:/i.test(a.replace("mailto", "")));
   assert.ok(mailtoUrl("a@b.c", "Тема", "стр1\nстр2").startsWith("mailto:a%40b.c?subject="));
 });
+
+test("store: импорт не портит Object.prototype (0.3.4, аудит М12)", () => {
+  const bad = '{"state":{"v":1,"settings":{"name":"x"},"progress":{"lessons":{}},"__proto__":{"polluted":1},"srs":{"constructor":{"prototype":{"p2":1}}}}}';
+  importJSON(bad);
+  assert.equal({}.polluted, undefined);
+  assert.equal({}.p2, undefined);
+  assert.equal(S.settings.name, "x");
+});

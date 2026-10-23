@@ -2,23 +2,25 @@ import { app } from "../app.js";
 import { S, save } from "../store.js";
 import { t, ui, hint } from "../i18n.js";
 import { C, setCurrent } from "../content.js";
-import { esc, permIdx } from "../util.js";
+import { esc, permIdx, plain } from "../util.js";
 import { top, playIcon } from "../ui.js";
 import { log } from "../analytics.js";
 import * as audio from "../audio.js";
 const R = app.R, ACT = app.ACT;
 const sample = () => C.lesson.scenario.name_slot.sample;
 const fill = s => String(s == null ? "" : s).split("{имя}").join(sample());
+/* в таджикском переводе имя без знака ударения (0.3.4, аудит М8) */
+const fillTg = s => String(s == null ? "" : s).split("{имя}").join(plain(sample()));
 const showTg = o => S.settings.hintLang === "tg" && o && o.tg;
 const turns = () => C.lesson.scenario.turns;
 ACT.dlgstart = e => { if (e && e.dataset && e.dataset.v) setCurrent(e.dataset.v); const T = turns()[0]; app.st.dlg = { turn: 0, sel: null, done: false, hide: {}, hist: [{ ru: T.bot.ru, tg: T.bot.tg, me: false, aid: T.bot.audio_id }] }; app.go("dialog"); };
 R.dialog = () => {
   const d = app.st.dlg, T = turns()[d.turn]; let chat = '<div class="chat" aria-live="polite">';
-  d.hist.forEach(L => { chat += '<div class="bubble' + (L.me ? " me" : "") + '">' + esc(fill(L.ru)) + (showTg(L) ? '<span class="tr">' + esc(fill(L.tg)) + "</span>" : "") + '<button class="icon-btn" style="width:36px;height:36px;margin-top:4px" data-act="wsay" data-sp="' + (L.me ? "f" : "m") + '" data-v="' + esc(fill(L.ru)) + '" data-id="' + esc(L.aid || "") + '" aria-label="' + t("listen") + '">' + playIcon(14, "#14302E") + "</button></div>"; });
+  d.hist.forEach(L => { chat += '<div class="bubble' + (L.me ? " me" : "") + '">' + esc(fill(L.ru)) + (showTg(L) ? '<span class="tr">' + esc(fillTg(L.tg)) + "</span>" : "") + '<button class="icon-btn" style="width:36px;height:36px;margin-top:4px" data-act="wsay" data-sp="' + (L.me ? "f" : "m") + '" data-v="' + esc(fill(L.ru)) + '" data-id="' + esc(L.aid || "") + '" aria-label="' + t("listen") + '">' + playIcon(14, "#14302E") + "</button></div>"; });
   chat += "</div>"; const h = top(esc(t("d_title_n", { n: ui(C.lesson.scenario.title) })));
   if (d.done) return h + chat + '<div class="card center"><h2>' + t("d_done") + '</h2><p class="sub">' + t("d_done_s") + '</p></div><button class="btn sec" data-act="dlgstart">' + t("d_again") + '</button><button class="btn" data-act="tohome">' + t("done") + "</button>";
   const hid = (d.hide || {})[d.turn] || [];
-  if (d.sel === null) return h + chat + '<h3 style="margin-top:6px">' + (hid.length ? t("d_more") : t("d_pick")) + '</h3><div style="display:grid;gap:8px">' + permIdx(d, "p" + d.turn, T.options.length).filter(k => !hid.includes(k)).map(k => { const o = T.options[k]; return '<button class="choice" data-act="dpick" data-v="' + k + '">' + esc(fill(o.ru)) + (showTg(o) ? '<span class="tr" style="margin-left:6px">' + esc(fill(o.tg)) + "</span>" : "") + "</button>"; }).join("") + "</div>";
+  if (d.sel === null) return h + chat + '<h3 style="margin-top:6px">' + (hid.length ? t("d_more") : t("d_pick")) + '</h3><div style="display:grid;gap:8px">' + permIdx(d, "p" + d.turn, T.options.length).filter(k => !hid.includes(k)).map(k => { const o = T.options[k]; return '<button class="choice" data-act="dpick" data-v="' + k + '">' + esc(fill(o.ru)) + (showTg(o) ? '<span class="tr" style="margin-left:6px">' + esc(fillTg(o.tg)) + "</span>" : "") + "</button>"; }).join("") + "</div>";
   const o = T.options[d.sel], good = o.q !== "wrong";
   return h + chat + '<div class="card" role="status" style="background:' + (good ? "var(--tint)" : "#FFF5E2") + '"><b>' + (o.q === "best" ? t("d_good") : (o.q === "ok" ? t("d_ok") : t("d_soft"))) + '</b><span class="small" style="display:block;font-weight:400;margin-top:4px">' + esc(hint({ ru: o.fb_ru, tg: o.fb_tg })) + '</span></div><button class="btn" data-act="dnext2">' + t("next") + "</button>";
 };

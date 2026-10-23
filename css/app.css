@@ -47,7 +47,7 @@ p{margin:0}
 .center{text-align:center}
 .grow{flex:1}
 .nav{display:flex;border-top:1.5px solid var(--line);background:#fff;flex:none}
-.nav button{flex:1;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:transparent;color:var(--muted);font-size:.8rem;cursor:pointer}
+.nav button{flex:1;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:transparent;color:var(--muted);font-size:.875rem;cursor:pointer}
 .nav button[aria-current=page]{color:var(--primary-d);font-weight:700}
 .nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .bowl{display:block;margin:0 auto;width:200px;max-width:100%}
@@ -55,7 +55,7 @@ p{margin:0}
 .bar i{display:block;height:100%;background:var(--primary)}
 .stations{display:flex;justify-content:space-between;position:relative;padding:0 4px}
 .stations:before{content:"";position:absolute;left:34px;right:34px;top:17px;height:3px;background:var(--line)}
-.st{position:relative;width:25%;text-align:center;font-size:.8rem;line-height:1.2}
+.st{position:relative;width:25%;text-align:center;font-size:.875rem;line-height:1.2}
 .st svg{width:36px;height:36px;display:block;margin:0 auto 4px}
 .line{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
 .line:last-child{border-bottom:0}
@@ -71,7 +71,7 @@ p{margin:0}
 .sheet{background:#fff;width:100%;border-radius:24px 24px 0 0;padding:18px;display:flex;flex-direction:column;gap:12px;animation:up .2s ease}
 @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .pic{width:84px;height:84px;border-radius:18px;background:var(--tint);display:flex;align-items:center;justify-content:center;flex:none}
-.badge{display:inline-flex;align-items:center;min-height:28px;padding:2px 10px;border-radius:999px;background:#FFF5E2;color:#6B4710;font-size:.8rem;font-weight:700}
+.badge{display:inline-flex;align-items:center;min-height:28px;padding:2px 10px;border-radius:999px;background:#FFF5E2;color:#6B4710;font-size:.875rem;font-weight:700}
 .badge.g{background:var(--tint);color:var(--primary-d)}
 .bubble{max-width:88%;padding:10px 14px;border-radius:18px;background:#fff;box-shadow:0 0 0 1.5px var(--line)}
 .bubble.me{align-self:flex-end;background:var(--tint);box-shadow:0 0 0 1.5px var(--primary)}

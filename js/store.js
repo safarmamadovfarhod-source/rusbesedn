@@ -13,7 +13,9 @@ let mem = null, storageOk = true;
 export const S = DEFAULT();
 export const now = () => (typeof window !== "undefined" && window.__now) ? window.__now() : Date.now();
 export const today = () => dateStr(now());
-function merge(dst, src) { for (const k in src) { if (src[k] && typeof src[k] === "object" && !Array.isArray(src[k]) && dst[k] && typeof dst[k] === "object" && !Array.isArray(dst[k])) merge(dst[k], src[k]); else dst[k] = src[k]; } return dst; }
+/* ключи-ловушки из чужого файла пропускаем (0.3.4, аудит М12) */
+const BAD_KEYS = ["__proto__", "constructor", "prototype"];
+function merge(dst, src) { for (const k in src) { if (BAD_KEYS.includes(k) || !Object.prototype.hasOwnProperty.call(src, k)) continue; if (src[k] && typeof src[k] === "object" && !Array.isArray(src[k]) && dst[k] && typeof dst[k] === "object" && !Array.isArray(dst[k])) merge(dst[k], src[k]); else dst[k] = src[k]; } return dst; }
 export function load() {
   let raw = null;
   try { raw = localStorage.getItem(KEY); } catch (e) { storageOk = false; raw = mem; }

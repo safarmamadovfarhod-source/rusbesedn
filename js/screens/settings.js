@@ -43,7 +43,7 @@ ACT.settrack = e => {
 ACT.sethint = e => { S.settings.hintLang = e.dataset.v; save(); app.render(true); };
 ACT.setsize = e => { S.settings.large = e.dataset.v === "1"; save(); app.render(true); };
 ACT.install = async () => { const p = app.installPrompt; if (!p) { app.toast(t("install_help")); return; } p.prompt(); try { await p.userChoice; } catch (e) { } app.installPrompt = null; app.render(true); };
-ACT.export = () => { const blob = new Blob([exportJSON()], { type: "application/json" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rs-progress-" + today() + ".json"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
+ACT.export = () => { S.exportTs = today(); save(); const blob = new Blob([exportJSON()], { type: "application/json" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rs-progress-" + today() + ".json"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
 ACT.import = async el => { const f = el.files && el.files[0]; if (!f) return; const txt = await f.text(); if (importJSON(txt)) { app.toast(t("import_ok")); app.stack = []; app.go("home", { noPush: true }); } else app.toast(t("import_bad")); };
 ACT.share = async () => {
   const url = new URL("./", location.href).href, text = t("share_text");

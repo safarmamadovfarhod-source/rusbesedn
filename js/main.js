@@ -52,6 +52,17 @@ document.addEventListener("click", ev => {
 });
 document.addEventListener("change", ev => { const el = ev.target.closest("[data-act-change]"); if (el && app.ACT[el.dataset.actChange]) app.ACT[el.dataset.actChange](el); });
 document.addEventListener("keydown", ev => { if (ev.key === "Escape" && app.st.sheet) { app.st.sheet = null; app.render(true); } });
+/* Кнопка «назад» телефона (0.3.4, аудит В6): держим одну «запасную» запись в истории браузера.
+   Нажатие «назад» закрывает окно слова или ведёт на предыдущий экран приложения;
+   с главной (или с первого экрана) — выходит из приложения, как обычно на Android. */
+const GUARD = { rs: 1 };
+app.armBack = () => { try { if (!(history.state && history.state.rs === 1)) history.pushState(GUARD, ""); } catch (e) { /* без истории */ } };
+window.addEventListener("popstate", () => {
+  if (app.st.sheet) { app.st.sheet = null; app.render(true); app.armBack(); return; }
+  if (app.stack.length) { app.back(); app.armBack(); return; }
+  if (app.cur !== "home" && S.onboarded) { app.go("home", { noPush: true }); app.armBack(); return; }
+  try { history.back(); } catch (e) { /* выход */ }
+});
 window.addEventListener("error", e => logError(e.message));
 window.addEventListener("unhandledrejection", e => logError(e.reason && e.reason.message));
 window.addEventListener("online", () => { if (app.cur === "home") app.render(true); });
@@ -91,6 +102,10 @@ async function boot() {
     }
     S.lastOpen = td; save();
     app.render(false);
+    try { history.replaceState({ rs: 0 }, ""); } catch (e) { }
+    /* просим браузер не стирать прогресс (0.3.4, аудит В9); результат — для напоминания о резервной копии */
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => { if (S.persist !== ok) { S.persist = ok; save(); } }).catch(() => { }); } catch (e) { }
+    app.armBack();
     if (!S.settings.tilt || S.settings.tilt === "on") startTilt();
     if (first) showSplash();
     document.body.classList.add("ready");
