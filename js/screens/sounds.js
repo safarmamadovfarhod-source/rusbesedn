@@ -58,6 +58,10 @@ const all = () => SOUNDS.vow.concat(SOUNDS.cons, SOUNDS.signs);
 const find = l => all().find(x => x[0] === l);
 const got = l => Math.min(MAXP, (S.sounds && S.sounds[l]) || 0);
 const bump = (l, n) => { S.sounds = S.sounds || {}; S.sounds[l] = Math.min(MAXP, (S.sounds[l] || 0) + (n || 1)); };
+/* что звучит по кнопке «Послушать» (0.3.6): гласная — сам звук; согласная — в слоге с «а»
+   (голос телефона читает одну согласную как название буквы: «бэ», «эс»); ь и ъ — пара слов */
+const VOW = "аоуэыияёюе", SIGN = { "ь": "брат — брать", "ъ": "сел — съел" };
+export const soundOf = l => SIGN[l] || (VOW.includes(l) ? l : l === "й" ? "ай" : l + "а");
 const say = w => { audio.playText(plain(w)); setTimeout(() => { if (audio.state.mode === "silent" && !app.st.noVoice) { app.st.noVoice = true; app.render(true); } }, 120); };
 
 const tile = x => {
@@ -76,14 +80,14 @@ R.sounds = () => top(t("snd_title")) +
 R.sound = () => {
   const x = find(app.st.snd) || SOUNDS.vow[0], l = x[0];
   const ex = x[1].map((w, i) => '<button class="choice" data-act="sndsay" data-v="' + i + '"><span class="play" aria-hidden="true">' + IC.play + '</span><b lang="ru" style="font-size:1.3rem">' + esc(w) + "</b></button>").join("");
-  return top(t("snd_title")) + '<div class="center"><div class="sndbig" lang="ru">' + l.toUpperCase() + l + '</div><button class="btn sec" data-act="sndletter" style="max-width:240px;margin:0 auto">' + playIcon(18, "var(--primary)") + " " + t("snd_listen") + "</button></div>" +
+  return top(t("snd_title")) + '<div class="center"><div class="sndbig" lang="ru">' + l.toUpperCase() + l + '</div><button class="btn sec" data-act="sndletter" style="max-width:240px;margin:0 auto">' + playIcon(18, "var(--primary)") + " " + t("snd_listen") + '</button><p class="small" style="margin-top:6px">' + t("snd_heard") + ' <b lang="ru">«' + soundOf(l) + "»</b></p></div>" +
     (x[2] ? '<div class="card" style="margin-top:14px"><p style="margin:0">' + esc(ui(x[2])) + "</p></div>" : "") + noVoice() +
     "<h3>" + t("snd_ex") + '</h3><div style="display:grid;gap:8px">' + ex + "</div>" +
     '<p class="small" style="margin-top:12px">' + t("snd_prog", { a: got(l), b: MAXP }) + "</p>";
 };
-ACT.sndopen = e => { app.st.snd = e.dataset.v; app.go("sound"); const x = find(e.dataset.v); if (x) say(x[1][0]); };
+ACT.sndopen = e => { app.st.snd = e.dataset.v; app.go("sound"); say(soundOf(e.dataset.v)); };
 ACT.sndsay = e => { const x = find(app.st.snd); if (!x) return; say(x[1][+e.dataset.v]); bump(x[0]); save(); };
-ACT.sndletter = () => { const x = find(app.st.snd); if (!x) return; say(x[1][0]); bump(x[0]); save(); };
+ACT.sndletter = () => { const x = find(app.st.snd); if (!x) return; say(soundOf(x[0])); bump(x[0]); save(); };
 
 /* тренировка на слух */
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };

@@ -223,3 +223,50 @@ a.btn{text-decoration:none}
 .sndbig{font-size:4.5rem;font-weight:700;line-height:1;color:var(--primary);margin:8px 0 12px}
 .sndplay{display:grid;place-items:center;width:96px;height:96px;margin:12px auto 4px;border-radius:50%;border:0;background:var(--primary);box-shadow:0 5px 0 var(--primary-d);cursor:pointer}
 .sndplay:active{transform:translateY(3px);box-shadow:0 2px 0 var(--primary-d)}
+/* 0.3.6: карта пути в оформлении «Путь» */
+.map{position:relative;width:100%;aspect-ratio:340/196;margin:2px 0 10px;border-radius:var(--r);background:linear-gradient(180deg,var(--surface),var(--tint));box-shadow:0 0 0 1.5px var(--line);overflow:hidden}
+.mapbg{position:absolute;inset:0;width:100%;height:100%}
+.maplv{font:700 13px "PT Sans",sans-serif;fill:var(--primary)}
+.mst{position:absolute;transform:translate(-22px,-50%);display:flex;align-items:center;gap:6px;min-height:48px;padding:0;border:0;background:none;font:inherit;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mst.lft{flex-direction:row-reverse;transform:translate(calc(-100% + 22px),-50%)}
+.mdot{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:3px solid var(--edge);font-weight:700;color:var(--muted);box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.mdot svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:3}
+.mlbl{font-size:.95rem;font-weight:700;background:rgba(255,255,255,.85);padding:2px 8px;border-radius:10px;white-space:nowrap}
+.mst.done .mdot{background:var(--primary);border-color:var(--primary)}
+.mst.cur .mdot{background:#E8630A;border-color:#fff;color:#fff;box-shadow:0 0 0 3px #E8630A;animation:mpulse 1.8s ease-out infinite}
+.mst.soon .mdot{border-style:dashed}
+.mst.soon .mlbl{color:var(--muted);font-weight:400}
+@keyframes mpulse{0%{box-shadow:0 0 0 3px #E8630A,0 0 0 3px rgba(232,99,10,.45)}100%{box-shadow:0 0 0 3px #E8630A,0 0 0 16px rgba(232,99,10,0)}}
+@media (prefers-reduced-motion:reduce){.mst.cur .mdot{animation:none}}
+.goalrow.slim{padding:10px 14px;gap:10px}.goalrow.slim .cupsm,.goalrow.slim .cupsm .bowl{width:56px}
+/* 0.3.6: вкладка «Грамматика» */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.nav .pill{width:52px}
+.glh{margin:16px 0 8px;font-size:1rem;color:var(--muted)}
+.gtile.locked{opacity:.6}
+.gtile .micon svg{width:24px;height:24px}
+.micon.ok{background:var(--primary);color:#fff}
+.micon.ok svg{stroke:#fff}
+.gh{font-size:1.5rem;margin:4px 0 10px}
+.gbackl{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;margin:0 0 10px;border-radius:22px;border:2px solid var(--primary);background:var(--tint);color:var(--primary-d);font:inherit;font-weight:700;cursor:pointer}
+.grule{border-left:6px solid var(--primary)}
+.grule p{margin:0}.grule p+p{margin-top:8px}
+.gshort{font-size:1.1rem;font-weight:700}
+.gtable{display:grid;gap:6px;margin:12px 0}
+.gtr{display:grid;grid-template-columns:1fr 24px 1.4fr;align-items:center;gap:6px;padding:10px 14px;background:var(--surface);border-radius:var(--r-s);box-shadow:0 0 0 1.5px var(--line)}
+.garr{color:var(--primary);font-weight:700;text-align:center}
+.gcmp{background:var(--warm);margin-top:12px}.gcmp p{margin:4px 0 0}
+.gexs{display:grid;gap:8px}
+.gexr{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface);border-radius:var(--r-s);box-shadow:0 0 0 1.5px var(--line)}
+.gexr b{display:block;font-size:1.1rem}
+.gerr{padding:12px 14px;margin-bottom:8px;background:var(--surface);border-radius:var(--r-s);box-shadow:0 0 0 1.5px var(--line)}
+.gerr p{margin:0 0 4px;display:flex;gap:8px;align-items:baseline}
+.gx{color:var(--signal);font-weight:700}.gv{color:var(--ok);font-weight:700}
+.gw s{color:var(--muted)}
+.gq{margin-bottom:10px}
+/* кнопка «Подробнее» в уроке */
+.gmore{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin:2px 0 10px;padding:10px 14px;text-align:left;border-radius:var(--r-s);border:2px dashed var(--line);background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+.gmore.strong{border:2px solid var(--primary);background:var(--tint)}
+.gmore .gmi{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--surface);color:var(--primary)}
+.gmore svg,.gtile .micon svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.gmore svg{width:22px;height:22px}

@@ -109,3 +109,23 @@ test("store: импорт не портит Object.prototype (0.3.4, аудит 
   assert.equal({}.p2, undefined);
   assert.equal(S.settings.name, "x");
 });
+
+test("грамматика: темы и ссылки на задания (0.3.6)", () => {
+  const G = JSON.parse(fs.readFileSync(new URL("../data/grammar.json", import.meta.url), "utf8"));
+  const ids = new Set(G.topics.map(x => x.id));
+  assert.equal(ids.size, G.topics.length, "повтор id темы");
+  for (const tp of G.topics) {
+    for (const k of ["title", "short", "rule", "compare"]) { assert.ok(tp[k].ru && tp[k].tg, tp.id + ": нет " + k); }
+    assert.ok(tp.quiz.length >= 2, tp.id + ": мало вопросов");
+    tp.quiz.forEach(q => assert.ok(q.a >= 0 && q.a < q.opts.length, tp.id + ": неверный ответ в проверке"));
+    assert.ok(fs.existsSync(new URL("../data/lessons/" + tp.lesson + "/lesson.json", import.meta.url)), tp.id + ": нет урока");
+  }
+  for (const [lid, m] of Object.entries(G.links)) {
+    const L = JSON.parse(fs.readFileSync(new URL("../data/lessons/" + lid + "/lesson.json", import.meta.url), "utf8"));
+    const exIds = new Set(Object.values(L.exercises).flat().filter(e => e && e.id).map(e => e.id));
+    const glIds = new Set((L.grammar_layer || []).map(g => g.id)), rIds = new Set((L.rules || []).map(r => r.id));
+    for (const [k, v] of Object.entries(m.ex || {})) { assert.ok(exIds.has(k), lid + ": нет задания " + k); assert.ok(ids.has(v)); }
+    for (const [k, v] of Object.entries(m.gl || {})) { assert.ok(glIds.has(k), lid + ": нет слова " + k); assert.ok(ids.has(v)); }
+    for (const [k, v] of Object.entries(m.rules || {})) { assert.ok(rIds.has(k), lid + ": нет правила " + k); assert.ok(ids.has(v)); }
+  }
+});

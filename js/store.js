@@ -6,7 +6,7 @@ const DEFAULT = () => ({
   settings: { uiLang: null, hintLang: "tg", dailyMin: 15, rhythm: "daily", large: false, track: "a", theme: "c", level: null, voice: "f", tilt: "on", name: "" },
   onboarded: false, diag: null, diagB: null, order: {},
   progress: { lessons: {}, xp: 0, minutes: {}, days: [] },
-  srs: {}, shadow: {}, sounds: {}, badges: {}, events: [], errors: [], reports: [],
+  srs: {}, shadow: {}, sounds: {}, gram: {}, badges: {}, events: [], errors: [], reports: [],
   lastOpen: null, backShownOn: null
 });
 let mem = null, storageOk = true;

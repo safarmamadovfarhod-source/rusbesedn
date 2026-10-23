@@ -1,6 +1,7 @@
 import { app } from "../app.js";
 import { S, save, today, now } from "../store.js";
 import { t, ui, hint } from "../i18n.js";
+import { topicFor, moreBtn } from "./grammar.js";
 import { C, findWord, findGrammar, isName, exById, wordById, nextLessonId, setCurrent } from "../content.js";
 import { esc, norm, plain, shuffle, permOf, permIdx } from "../util.js";
 import { band, top, steps, bowl, fbCard, playIcon, IC } from "../ui.js";
@@ -43,7 +44,7 @@ ACT.tr = () => { S.showTr = !(S.showTr !== false); save(); app.render(true); };
 
 /* ---------- правила и частые ошибки (путь «Знаю русский») ---------- */
 R.rules = () => {
-  const L = C.lesson, rl = (L.rules || []).map(r => '<div class="card"><h3>' + esc(r.title_ru) + "</h3><p>" + esc(r.body_ru) + '</p><p class="small">' + (r.examples_ru || []).map(esc).join(" · ") + "</p></div>").join("");
+  const L = C.lesson, rl = (L.rules || []).map(r => '<div class="card"><h3>' + esc(r.title_ru) + "</h3><p>" + esc(r.body_ru) + '</p><p class="small">' + (r.examples_ru || []).map(esc).join(" · ") + "</p>" + moreBtn(topicFor(lid(), "rules", r.id), false) + "</div>").join("");
   const tr = (L.traps || []).map(x => '<div class="card"><p><span class="badge" style="background:#F8DCE3">' + t("wrong_h") + "</span> " + esc(x.wrong_ru) + '</p><p style="margin-top:6px"><span class="badge g">' + t("right_h") + "</span> <b>" + esc(x.right_ru) + '</b></p><p class="small" style="margin-top:6px">' + esc(x.why_ru) + "</p></div>").join("");
   return top(esc(ui(L.meta.title))) + "<h2>" + t("rules_h") + "</h2>" + rl + (tr ? "<h2>" + t("traps_h") + "</h2>" + tr : "") + '<div class="grow"></div><button class="btn" data-act="exstart">' + t("to_ex") + "</button>";
 };
@@ -64,7 +65,7 @@ export function sheetHtml() {
   const tabs = '<div class="seg" role="tablist"><button role="tab" data-act="sheettab" data-v="word" aria-pressed="' + (sh.tab === "word") + '">' + t("tab_word") + '</button><button role="tab" data-act="sheettab" data-v="why" aria-pressed="' + (sh.tab === "why") + '">' + t("tab_why") + "</button></div>";
   let body;
   if (sh.tab === "why") {
-    body = g ? grammarBody(g, name) : "<p>" + t("no_grammar") + "</p>";
+    body = g ? grammarBody(g, name) + moreBtn(topicFor(lid(), "gl", g.id), true) : "<p>" + t("no_grammar") + "</p>";
     log("grammar_open", { item: g ? g.id : n });
   } else {
     body = w ? '<p class="sub"><b>' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + '</b></p>' + (w.tg ? '<p class="small">' + esc(hint({ ru: w.tg, tg: w.gloss_ru })) + "</p>" : "") + '<p class="small">' + esc(ui({ ru: w.pos_ru, tg: w.pos_tg })) + '</p><p style="margin-top:6px">' + esc(w.ex) + "</p>" : '<p class="sub"><b>' + (name ? t("name_word") : t("no_word")) + "</b></p>";
@@ -122,7 +123,12 @@ R.exer = () => {
       (E.shown ? '<div class="card" style="background:var(--tint)"><p class="small"><b>' + t("ex_ref_h") + '</b></p><h3 style="margin-top:4px">' + esc(refFor(ex.reference)) + "</h3></div>" + (E.fb ? "" : "<h3>" + t("ex_self") + '</h3><div class="row"><button class="btn" data-act="exself" data-v="1">' + t("ex_same") + '</button><button class="btn sec" data-act="exself" data-v="0">' + t("ex_redo") + "</button></div>") : '<button class="btn sec" data-act="exref">' + t("ex_ref") + "</button>");
   }
   let fb = "";
-  if (E.fb) { const expl = ex.expl_ru ? esc(hint({ ru: ex.expl_ru, tg: ex.expl_tg })) : ""; fb = fbCard(E.fb.ok, (E.fb.ok ? t("fb_ok") : (E.fb.right ? t("fb_soft") + esc(E.fb.right) : t("ex_redo"))) + (expl ? '<span class="small" style="display:block;font-weight:400;margin-top:4px">' + expl + "</span>" : "")) + '<button class="btn" data-act="exnext">' + t("next") + "</button>"; }
+  if (E.fb) {
+    const expl = ex.expl_ru ? esc(hint({ ru: ex.expl_ru, tg: ex.expl_tg })) : "";
+    /* 0.3.6: после ошибки — «Неверно» (без «Почти»); в «Верно/неверно» правильный ответ и так подсвечен */
+    const head = E.fb.ok ? t("fb_ok") : (ex.type === "truefalse" || !E.fb.right ? t("fb_bad") : t("fb_soft") + esc(E.fb.right));
+    fb = fbCard(E.fb.ok, head + (expl ? '<span class="small" style="display:block;font-weight:400;margin-top:4px">' + expl + "</span>" : "")) + moreBtn(topicFor(lid(), "ex", ex.id), !E.fb.ok) + '<button class="btn" data-act="exnext">' + t("next") + "</button>";
+  }
   const errBtn = '<button class="btn ghost small" data-act="exerr">' + t("ex_err") + "</button>";
   return top(t("ex_title")) + steps(flow.length, E.i) + body + fb + errBtn;
 };

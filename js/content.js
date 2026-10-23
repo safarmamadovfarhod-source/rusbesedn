@@ -1,13 +1,14 @@
 import { norm } from "./util.js";
 import { S } from "./store.js";
 /* Содержимое: курсы (пути a и b), уроки, диагностики. «Текущий урок» (C.lesson) переключается через setCurrent(id). */
-export const C = { courses: null, lessons: {}, diag: {}, cur: null, lesson: null, lessonMeta: null, timings: null, idx: { word: {}, grammar: {} } };
+export const C = { grammar: null, courses: null, lessons: {}, diag: {}, cur: null, lesson: null, lessonMeta: null, timings: null, idx: { word: {}, grammar: {} } };
 const NAMES = ["анна", "руслан"];
 async function getJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error("HTTP " + r.status + " " + url); return r.json(); }
 export async function loadAll() {
   C.courses = await getJSON("data/courses.json");
   const [da, db] = await Promise.all([getJSON("data/diag.json"), getJSON("data/diag_b.json").catch(() => null)]);
   C.diag = { a: da, b: db };
+  C.grammar = await getJSON("data/grammar.json").catch(() => null); /* темы вкладки «Грамматика» (0.3.6) */
   const metas = [];
   C.courses.courses.forEach(c => c.lessons.forEach(l => { if (l.path) metas.push(Object.assign({ track: c.id }, l)); }));
   await Promise.all(metas.map(async m => {

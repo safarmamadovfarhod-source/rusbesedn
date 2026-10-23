@@ -44,6 +44,34 @@ const strengthsCard = () => {
   return '<div class="card"><b>' + t("strong_h") + "</b>" + tv.map(x => '<div class="li"><span class="tick' + (x.strong ? " on" : "") + '">' + (x.strong ? IC.check : "") + '</span><span class="grow">' + esc(x.title) + '</span><span class="badge ' + (x.strong ? "g" : "") + '">' + (x.strong ? t("strong_s") : t("weak_s")) + "</span></div>").join("") + "</div>";
 };
 
+/* ---------- карта пути (оформление «Путь», 0.3.6) ----------
+   Дорожка снизу вверх: пройденные станции — с галочкой и сплошной линией, текущая — оранжевая и «дышит»,
+   будущие — пустые кружки. На станцию можно нажать. Размеры в координатах 340×230, карта масштабируется целиком. */
+const MAPW = 340, MAPH = 196, MX = [64, 236, 128, 262, 92, 214], LEVELS = { a: ["A0", "A2"], b: ["A2", "B1"] };
+export const mapView = (tr, nid) => {
+  const ls = courseOf(tr).lessons.slice(0, 6), n = ls.length; if (!n) return "";
+  const pt = ls.map((l, k) => [MX[k % MX.length], Math.round(MAPH - 30 - (n > 1 ? k * (MAPH - 60) / (n - 1) : 0))]);
+  const seg = (a, b) => "C" + a[0] + " " + (a[1] + b[1]) / 2 + " " + b[0] + " " + (a[1] + b[1]) / 2 + " " + b[0] + " " + b[1];
+  const curIdx = ls.findIndex(l => l.id === nid), lastDone = ls.reduce((m, l, k) => lessonDoneId(l.id) ? k : m, 0), doneTo = curIdx < 0 ? lastDone : curIdx;
+  let solid = "M" + pt[0][0] + " " + pt[0][1], dots = "M" + pt[Math.max(0, doneTo)][0] + " " + pt[Math.max(0, doneTo)][1];
+  for (let k = 1; k < n; k++) { if (k <= doneTo) solid += seg(pt[k - 1], pt[k]); else dots += seg(pt[k - 1], pt[k]); }
+  const waves = [40, 90, 140, 190].map((y, k) => '<path d="M-10 ' + y + "C70 " + (y - 26) + " 120 " + (y + 24) + " 200 " + (y - 4) + "S300 " + (y - 22) + " 350 " + (y + 6) + '" opacity="' + (0.9 - k * .12) + '"/>').join("");
+  const lv = LEVELS[tr] || LEVELS.a;
+  const svg = '<svg class="mapbg" viewBox="0 0 ' + MAPW + " " + MAPH + '" aria-hidden="true"><g fill="none" stroke="var(--line)" stroke-width="1.5">' + waves + '</g>' +
+    (doneTo > 0 ? '<path d="' + solid + '" fill="none" stroke="var(--primary)" stroke-width="5" stroke-linecap="round"/>' : "") +
+    '<path d="' + dots + '" fill="none" stroke="var(--edge)" stroke-width="4" stroke-linecap="round" stroke-dasharray="0.1 10"/>' +
+    '<text x="14" y="' + (MAPH - 8) + '" class="maplv">' + lv[0] + '</text><text x="' + (MAPW - 14) + '" y="18" text-anchor="end" class="maplv">' + lv[1] + "</text></svg>";
+  const st = ls.map((l, k) => {
+    const d = lessonDoneId(l.id), cur = k === curIdx, soon = !l.path, left = pt[k][0] > MAPW / 2;
+    const cls = "mst" + (d ? " done" : "") + (cur ? " cur" : "") + (soon ? " soon" : "") + (left ? " lft" : "");
+    const act = soon ? 'data-act="mapsoon"' : 'data-act="startlesson" data-v="' + l.id + '"';
+    const state = d ? t("map_done") : cur ? t("map_cur") : soon ? t("map_soon_s") : "";
+    return '<button class="' + cls + '" ' + act + ' style="left:' + (pt[k][0] / MAPW * 100).toFixed(2) + "%;top:" + (pt[k][1] / MAPH * 100).toFixed(2) + '%" aria-label="' + esc(t("lesson_n", { n: k + 1 }) + ": " + plain(ui(l.title)) + (state ? " — " + state : "")) + '"' + (cur ? ' aria-current="step"' : "") + '><span class="mdot">' + (d ? IC.check : k + 1) + '</span><span class="mlbl">' + esc(ui(l.title)) + "</span></button>";
+  }).join("");
+  return '<div class="map" role="group" aria-label="' + esc(t("map_title")) + '">' + svg + st + "</div>";
+};
+ACT.mapsoon = () => app.toast(t("map_soon"));
+
 R.home = () => {
   const P = S.progress, td = today(), total = weekGoal(S.settings.dailyMin), got = weekMinutes(P.minutes, td), pct = Math.min(100, Math.round(got / total * 100));
   const streak = computeStreak(P.days, td), due = dueList(S.srs, td).length, tr = track(), nid = nextLessonId(tr);
@@ -60,14 +88,16 @@ R.home = () => {
   }
   const off = typeof navigator !== "undefined" && navigator.onLine === false ? '<button class="card" data-go="offline" style="display:block;text-align:left"><b>' + t("off_title") + '</b><span class="small" style="display:block">' + t("off_banner") + "</span></button>" : "";
   const th = S.settings.theme || "c", revBtn = nid && due ? '<button class="btn sec" data-act="revstart">' + t("rev_btn", { n: due }) + "</button>" : "";
-  const tiltBtn = permissionPending() ? '<button class="btn ghost" data-act="tiltask">' + t("tilt_ask") + '</button><p class="small center">' + t("tilt_note") + "</p>" : "";
+  const tiltBtn = permissionPending() ? '<button class="btn sec" data-act="tiltask">' + t("tilt_ask") + '</button><p class="small center">' + t("tilt_note") + "</p>" : "";
   /* напоминание о резервной копии: если браузер не обещал хранить данные постоянно (0.3.4) */
   const backup = (S.persist === false && doneCount() > 0 && (!S.exportTs || diffDays(td, S.exportTs) >= 14)) ? '<div class="card" role="note"><b>' + t("backup_h") + '</b><p class="small">' + t("backup_s") + '</p><button class="btn sec" data-act="export">' + t("export") + "</button></div>" : "";
   const tail = revBtn + strengthsCard() + backup + progressCard(), pre = off + iosCard();
   const nm0 = (S.settings.name || "").trim(), head = '<div class="top" style="margin-top:-2px"><h1 class="grow">' + esc(nm0 ? t("hello_name", { name: nm0 }) : t("hello")) + "</h1></div>";
-  if (th === "a") { /* «Путь»: цель недели строкой, карта пути, карточка урока */
-    const route = '<div class="route" aria-label="' + esc(ui(courseOf(tr).title)) + '">' + all.map((l, k) => { const d = lessonDoneId(l.id), cur = nid === l.id; return '<div class="rt' + (d ? " done" : "") + (cur ? " cur" : "") + (l.path ? "" : " soon") + '"><span class="dot">' + (d ? IC.check : k + 1) + '</span><span class="lbl">' + esc(ui(l.title)) + "</span></div>"; }).join("") + "</div>";
-    return band() + head + pre + '<div class="card goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + '</p><span class="badge g">' + t("streak", { n: streak }) + "</span></div></div>" + card + route + tiltBtn + tail; /* 0.3.5: строка с чашей остаётся первой, как было */
+  if (th === "a") { /* «Путь» (0.3.6): цель недели, карта пути (как в эскизе), карточка урока */
+    const goal = '<div class="card goalrow slim"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><p style="margin:0"><b>' + t("min_of", { a: got, b: total }) + '</b> <span class="small">· ' + t("weekgoal") + '</span></p><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div></div></div>';
+    const strk = '<div class="center" style="margin:-2px 0 6px"><span class="badge g">' + t("streak", { n: streak }) + "</span></div>";
+    const sub = got ? "" : '<p class="sub" style="margin:-6px 0 4px">' + t("home_sub") + "</p>";
+    return head + sub + pre + goal + mapView(tr, nid) + card + strk + tiltBtn + tail;
   }
   if (th === "b") { /* «Ы-талисман» (D-60): шапка с талисманом, дни недели, карточка урока, чаша из кода */
     const ws = weekStart(td), wd = t("wd").split(","), tdMin = P.minutes[td] || 0, dm = S.settings.dailyMin, dpct = Math.min(100, Math.round(tdMin / dm * 100));

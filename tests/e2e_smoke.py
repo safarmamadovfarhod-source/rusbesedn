@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Проверка экранов в браузере (телефон 360×640): онбординг, урок, подсветка ответа, «Верно/неверно»,
-кнопка «назад» телефона, продолжение урока после перезагрузки, диалог, меню «Ещё» и «Звуки», офлайн, ошибки JavaScript.
+кнопка «назад» телефона, продолжение урока после перезагрузки, диалог, меню «Ещё», «Звуки», «Грамматика», офлайн, ошибки JavaScript.
 
 Нужен Python-пакет playwright и Chromium:  pip install playwright && playwright install chromium
 Запуск из папки приложения:
@@ -125,6 +125,14 @@ with sync_playwright() as p:
         page.locator("button[data-act=sndpick]").first.click(); wait(page, 120)
         page.locator("button[data-act=sndnext]").click(); wait(page, 150)
     check("тренировка звуков завершается", page.locator("button[data-act=sndexit]").count() == 1)
+
+    # «Грамматика» (0.3.6): вкладка, тема, проверка
+    page.goto(URL); wait(page, 700)
+    check("в нижнем меню 5 вкладок", page.locator(".nav button").count() == 5)
+    page.locator(".nav button[data-go=grammar]").click(); wait(page)
+    check("«Грамматика»: есть открытые темы", page.locator(".gtile:not(.locked)").count() > 0)
+    page.locator(".gtile:not(.locked)").first.click(); wait(page)
+    check("тема: правило, примеры, проверка", page.locator(".grule").count() == 1 and page.locator(".gexr").count() > 0 and page.locator("button[data-act=gans]").count() > 0)
 
     # офлайн после первой загрузки
     page.goto(URL); wait(page, 1500)

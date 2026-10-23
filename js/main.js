@@ -15,9 +15,10 @@ import "./screens/lesson.js";
 import "./screens/dialog.js";
 import "./screens/settings.js";
 import "./screens/sounds.js";
+import "./screens/grammar.js";
 import { sheetHtml } from "./screens/lesson.js";
 
-const TABS = ["home", "words", "talk", "settings"];
+const TABS = ["home", "words", "talk", "grammar", "settings"];
 const $ = s => document.querySelector(s);
 const isTab = id => TABS.includes(id);
 app.applyTheme = () => { document.documentElement.dataset.theme = S.settings.theme || "c"; };

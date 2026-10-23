@@ -1,5 +1,5 @@
 /* Сервис-воркер: офлайн-режим. Версия и список файлов подставляются tools/build_manifest.py */
-const VERSION = "5afcd69105";
+const VERSION = "3beb4b5fdb";
 const CACHE = "rs-" + VERSION;
 const PRECACHE = [
  "./",
@@ -7,6 +7,7 @@ const PRECACHE = [
  "data/courses.json",
  "data/diag.json",
  "data/diag_b.json",
+ "data/grammar.json",
  "data/i18n.json",
  "data/lessons/a0_01/lesson.json",
  "data/lessons/b_01/lesson.json",
@@ -65,6 +66,7 @@ const PRECACHE = [
  "js/progress.js",
  "js/report.js",
  "js/screens/dialog.js",
+ "js/screens/grammar.js",
  "js/screens/home.js",
  "js/screens/lesson.js",
  "js/screens/onboarding.js",
