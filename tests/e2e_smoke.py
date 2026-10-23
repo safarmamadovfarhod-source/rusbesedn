@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Проверка экранов в браузере (телефон 360×640): онбординг, урок, подсветка ответа, «Верно/неверно»,
-кнопка «назад» телефона, продолжение урока после перезагрузки, диалог, офлайн, ошибки JavaScript.
+кнопка «назад» телефона, продолжение урока после перезагрузки, диалог, меню «Ещё» и «Звуки», офлайн, ошибки JavaScript.
 
 Нужен Python-пакет playwright и Chromium:  pip install playwright && playwright install chromium
 Запуск из папки приложения:
@@ -110,6 +110,21 @@ with sync_playwright() as p:
     btn(page, "Дальше").click(); wait(page, 500)
     check("диалог: после ответа «ok» нужно выбрать подходящий", "подходит лучше" in page.inner_text("body"))
     check("диалог: имя в таджикском переводе без ударения", "Номи ман А́нна" not in page.inner_text("body"))
+
+    # «Ещё» — меню разделов, «Звуки» и тренировка на слух (0.3.5)
+    page.goto(URL); wait(page, 700)
+    page.locator(".nav button").last.click(); wait(page)
+    check("«Ещё» — меню разделов", page.locator(".mrow").count() >= 8)
+    page.locator(".mrow", has_text="Вид и звук").click(); wait(page)
+    check("оформления показаны картинками", page.locator(".thprev svg").count() == 3)
+    page.locator("[data-back]").first.click(); wait(page)
+    page.locator(".mrow", has_text="Звуки").click(); wait(page)
+    check("«Звуки»: сетка из 33 звуков", page.locator(".sndtile").count() == 33)
+    page.locator("button[data-act=sndstart]").click(); wait(page)
+    for _ in range(8):
+        page.locator("button[data-act=sndpick]").first.click(); wait(page, 120)
+        page.locator("button[data-act=sndnext]").click(); wait(page, 150)
+    check("тренировка звуков завершается", page.locator("button[data-act=sndexit]").count() == 1)
 
     # офлайн после первой загрузки
     page.goto(URL); wait(page, 1500)

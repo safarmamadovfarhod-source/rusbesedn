@@ -13,27 +13,65 @@ import { CONFIG } from "../config.js";
 import * as audio from "../audio.js";
 const R = app.R, ACT = app.ACT;
 
+/* ---------- «Ещё»: меню разделов (0.3.5) — каждый раздел на своей странице, как в Duolingo ---------- */
+const MI = {
+  progress: '<path d="M4 20V10M10 20V4M16 20v-8"/>',
+  sounds: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/>',
+  study: '<path d="M3 8l9-4 9 4-9 4z"/><path d="M7 10v5c3 2 7 2 10 0v-5"/>',
+  look: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 000 16z" fill="currentColor"/>',
+  data: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>',
+  share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 11l7.6-4M8.2 13l7.6 4"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 0c0 2-2.5 2-2.5 4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/>',
+  about: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".6" fill="currentColor"/>',
+  dev: '<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'
+};
+const chev = '<svg class="mchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const mrow = (id, title, sub, attr) => '<button class="mrow" ' + attr + '><span class="micon mi-' + id + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + MI[id] + '</svg></span><span class="grow"><b>' + title + "</b>" + (sub ? '<span class="small" style="display:block">' + sub + "</span>" : "") + "</span>" + chev + "</button>";
 R.settings = () => {
+  const rows = [
+    mrow("progress", t("p_title"), t("p_more"), 'data-go="progress"'),
+    mrow("sounds", t("snd_title"), t("snd_menu_s"), 'data-go="sounds"'),
+    mrow("study", t("m_study"), t("m_study_s"), 'data-go="setstudy"'),
+    mrow("look", t("m_look"), t("m_look_s"), 'data-go="setlook"'),
+    mrow("data", t("data_h"), t("m_data_s"), 'data-go="setdata"'),
+    mrow("share", t("m_share"), t("m_share_s"), 'data-go="setshare"'),
+    mrow("help", t("report"), t("m_help_s"), 'data-act="repopen"'),
+    mrow("about", t("n_about"), t("ab_ver", { v: CONFIG.APP_VERSION }), 'data-go="about"')
+  ].concat(CONFIG.DEV_PANEL ? [mrow("dev", t("dev_h"), t("m_dev_s"), 'data-go="setdev"')] : []);
+  return band() + "<h1>" + t("n_more") + '</h1><div class="mlist">' + rows.join("") + "</div>";
+};
+/* Учёба: язык интерфейса, путь, подсказки, цель в день */
+R.setstudy = () => {
   const mins = [5, 10, 15, 30, 60].map(m => '<button class="chip" data-act="setmin" data-v="' + m + '" aria-pressed="' + (S.settings.dailyMin === m) + '">' + m + "</button>").join("");
-  const cnt = counts(), cl = Object.keys(cnt).sort().map(k => "<li>" + esc(k) + ": " + cnt[k] + "</li>").join("") || "<li>—</li>";
-  const dev = ["lang", "path", "level", "theme", "goal", "ready", "diag", "diagb", "result", "resultb", "skiptest", "back", "offline"].map(id => '<button class="chip" style="border-radius:12px;min-height:44px;font-size:.95rem" data-act="dev" data-v="' + id + '">' + id + "</button>").join("");
-  const confirm = app.st.confirm ? '<div class="card" role="alertdialog" style="background:#FFF5E2"><b>' + t("reset_q") + '</b><div class="row" style="margin-top:8px"><button class="btn warm" data-act="resetyes">' + t("reset_yes") + '</button><button class="btn sec" data-act="resetno">' + t("cancel") + "</button></div></div>" : "";
-  return band() + "<h1>" + t("n_more") + '</h1><button class="card" data-go="progress" style="display:block;text-align:left;width:100%"><b>' + t("p_title") + '</b><span class="small" style="display:block">' + t("p_more") + '</span></button><button class="card" data-go="about" style="display:block;text-align:left;width:100%;margin-top:10px"><b>' + t("n_about") + '</b><span class="small" style="display:block">' + t("ab_ver", { v: CONFIG.APP_VERSION }) + "</span></button>" +
-    "<h3>" + t("set_title") + "</h3>" +
+  return top(t("m_study")) +
     "<h3>" + t("ui_lang") + '</h3><div class="seg"><button data-act="setlang" data-v="tg" aria-pressed="' + (S.settings.uiLang === "tg") + '" lang="tg">Тоҷикӣ</button><button data-act="setlang" data-v="ru" aria-pressed="' + (S.settings.uiLang === "ru") + '" lang="ru">Русский</button></div>' +
     "<h3>" + t("path_h") + '</h3><div class="seg"><button data-act="settrack" data-v="a" aria-pressed="' + (S.settings.track === "a") + '">' + t("path_a_short") + '</button><button data-act="settrack" data-v="b" aria-pressed="' + (S.settings.track === "b") + '">' + t("path_b_short") + "</button></div>" +
     (S.settings.track === "a" ? "<h3>" + t("hint_lang") + '</h3><div class="seg"><button data-act="sethint" data-v="tg" aria-pressed="' + (S.settings.hintLang === "tg") + '">' + t("h_tg") + '</button><button data-act="sethint" data-v="ru" aria-pressed="' + (S.settings.hintLang === "ru") + '">' + t("h_ru") + "</button></div>" : "") +
-    "<h3>" + t("theme_h") + '</h3><div style="display:grid;gap:8px">' + themePicker() + "</div>" +
-    "<h3>" + t("voice_h") + '</h3><div class="seg"><button data-act="setvoice" data-v="f" aria-pressed="' + (S.settings.voice !== "m") + '">' + t("v_f") + '</button><button data-act="setvoice" data-v="m" aria-pressed="' + (S.settings.voice === "m") + '">' + t("v_m") + '</button></div><p class="small">' + t("voice_note") + "</p>" +
-    "<h3>" + t("tilt_h") + '</h3><div class="seg"><button data-act="settilt" data-v="on" aria-pressed="' + (S.settings.tilt !== "off") + '">' + t("tilt_on") + '</button><button data-act="settilt" data-v="off" aria-pressed="' + (S.settings.tilt === "off") + '">' + t("tilt_off") + '</button></div><p class="small">' + t("tilt_note") + "</p>" +
-    "<h3>" + t("goal_day") + '</h3><div class="chips">' + mins + "</div>" +
-    "<h3>" + t("text_size") + '</h3><div class="seg"><button data-act="setsize" data-v="0" aria-pressed="' + !S.settings.large + '">' + t("sz_n") + '</button><button data-act="setsize" data-v="1" aria-pressed="' + S.settings.large + '">' + t("sz_l") + "</button></div>" +
+    "<h3>" + t("goal_day") + '</h3><div class="chips">' + mins + "</div>";
+};
+/* Вид и звук: оформление (с картинками), голос, размер текста, колыхание */
+R.setlook = () => top(t("m_look")) +
+  "<h3>" + t("theme_h") + '</h3><div style="display:grid;gap:8px">' + themePicker() + "</div>" +
+  "<h3>" + t("voice_h") + '</h3><div class="seg"><button data-act="setvoice" data-v="f" aria-pressed="' + (S.settings.voice !== "m") + '">' + t("v_f") + '</button><button data-act="setvoice" data-v="m" aria-pressed="' + (S.settings.voice === "m") + '">' + t("v_m") + '</button></div><p class="small">' + t("voice_note") + "</p>" +
+  "<h3>" + t("text_size") + '</h3><div class="seg"><button data-act="setsize" data-v="0" aria-pressed="' + !S.settings.large + '">' + t("sz_n") + '</button><button data-act="setsize" data-v="1" aria-pressed="' + S.settings.large + '">' + t("sz_l") + "</button></div>" +
+  "<h3>" + t("tilt_h") + '</h3><div class="seg"><button data-act="settilt" data-v="on" aria-pressed="' + (S.settings.tilt !== "off") + '">' + t("tilt_on") + '</button><button data-act="settilt" data-v="off" aria-pressed="' + (S.settings.tilt === "off") + '">' + t("tilt_off") + '</button></div><p class="small">' + t("tilt_note") + "</p>";
+/* Мои данные: без интернета, сохранить / загрузить / удалить */
+R.setdata = () => {
+  const confirm = app.st.confirm ? '<div class="card" role="alertdialog" style="background:#FFF5E2"><b>' + t("reset_q") + '</b><div class="row" style="margin-top:8px"><button class="btn warm" data-act="resetyes">' + t("reset_yes") + '</button><button class="btn sec" data-act="resetno">' + t("cancel") + "</button></div></div>" : "";
+  return top(t("data_h")) +
     "<h3>" + t("offline_h") + '</h3><div class="card"><div class="li"><span class="tick on">' + IC.check + '</span><span class="grow">' + t("off_l1") + '</span></div><p class="small">' + (isPersistent() ? t("store_ok") : t("store_bad")) + "</p></div>" +
-    (isStandalone() ? '<p class="small">' + t("ios_done") + "</p>" : isIOS() ? '<div class="card"><b>' + t("ios_h") + "</b>" + iosSteps() + "</div>" : '<button class="btn sec" id="installbtn" data-act="install">' + t("install") + '</button><p class="small" id="installnote">' + t("install_help") + "</p>") +
-    '<h3>' + t("share_h") + '</h3><button class="btn sec" data-act="share">' + t("share_btn") + '</button>' +
-    '<button class="btn sec" data-act="repopen" style="margin-top:10px">' + t("report") + "</button>" +
-    "<h3>" + t("data_h") + '</h3><div class="row" style="flex-wrap:wrap"><button class="btn sec" data-act="export">' + t("export") + '</button><label class="btn sec" style="cursor:pointer">' + t("import") + '<input id="impfile" type="file" accept="application/json,.json" style="display:none" data-act-change="import"></label></div><p class="small">' + t("data_note") + "</p>" + confirm + '<button class="btn ghost" data-act="resetask">' + t("reset") + "</button>" +
-    (!CONFIG.DEV_PANEL ? '<p class="small" style="margin-top:12px">' + t("ver") + ": " + CONFIG.APP_VERSION + "</p>" : '<details class="card"><summary><b>' + t("dev_h") + "</b></summary><p class=\"small\">" + t("dev_note") + "</p><ul class=\"small\">" + cl + '</ul><p class="small">' + t("ver") + ": " + CONFIG.APP_VERSION + '</p><div class="chips" style="margin-top:8px">' + dev + "</div></details>");
+    "<h3>" + t("m_backup") + '</h3><div class="row" style="flex-wrap:wrap"><button class="btn sec" data-act="export">' + t("export") + '</button><label class="btn sec" style="cursor:pointer">' + t("import") + '<input id="impfile" type="file" accept="application/json,.json" style="display:none" data-act-change="import"></label></div><p class="small">' + t("data_note") + "</p>" +
+    confirm + '<button class="btn ghost" data-act="resetask">' + t("reset") + "</button>";
+};
+/* Установить и поделиться */
+R.setshare = () => top(t("m_share")) +
+  (isStandalone() ? '<div class="card"><p>' + t("ios_done") + "</p></div>" : isIOS() ? '<div class="card"><b>' + t("ios_h") + "</b>" + iosSteps() + "</div>" : '<button class="btn" id="installbtn" data-act="install">' + t("install") + '</button><p class="small" id="installnote">' + t("install_help") + "</p>") +
+  "<h3>" + t("share_h") + '</h3><button class="btn sec" data-act="share">' + t("share_btn") + "</button>";
+/* Для проверки (только пилотная сборка) */
+R.setdev = () => {
+  const cnt = counts(), cl = Object.keys(cnt).sort().map(k => "<li>" + esc(k) + ": " + cnt[k] + "</li>").join("") || "<li>—</li>";
+  const dev = ["lang", "path", "level", "theme", "goal", "ready", "diag", "diagb", "result", "resultb", "skiptest", "back", "offline"].map(id => '<button class="chip" style="border-radius:12px;min-height:44px;font-size:.95rem" data-act="dev" data-v="' + id + '" aria-label="' + t("dev_h") + ": " + id + '">' + id + "</button>").join("");
+  return top(t("dev_h")) + '<p class="small">' + t("dev_note") + '</p><ul class="small">' + cl + '</ul><p class="small">' + t("ver") + ": " + CONFIG.APP_VERSION + '</p><div class="chips">' + dev + "</div>";
 };
 ACT.setvoice = e => { S.settings.voice = e.dataset.v; save(); app.render(true); audio.playText("Здра́вствуйте", null); };
 ACT.settrack = e => {

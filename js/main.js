@@ -14,6 +14,7 @@ import "./screens/home.js";
 import "./screens/lesson.js";
 import "./screens/dialog.js";
 import "./screens/settings.js";
+import "./screens/sounds.js";
 import { sheetHtml } from "./screens/lesson.js";
 
 const TABS = ["home", "words", "talk", "settings"];
@@ -27,7 +28,9 @@ app.render = keep => {
   audio.stop();
   const view = $("#view"), prev = keep ? view.scrollTop : 0, fn = app.R[app.cur];
   if (!fn) { app.cur = "home"; return app.render(false); }
-  view.innerHTML = '<div class="scr" tabindex="-1" data-screen="' + app.cur + '">' + fn() + "</div>" + sheetHtml();
+  view.innerHTML = '<div class="scr" tabindex="-1" data-screen="' + app.cur + '">' + fn() + "</div>";
+  /* окно слова — поверх экрана, а не внутри прокручиваемой области (0.3.5): иначе после прокрутки списка оно оказывалось выше края экрана */
+  const sh = $("#sheethost"), shHtml = sheetHtml(); if (sh) { const wasOpen = !!sh.firstChild; sh.innerHTML = shHtml; const body = sh.querySelector(".sheet"); if (body && !(keep && wasOpen)) body.scrollTop = 0; }
   view.scrollTop = prev;
   $("#navhost").innerHTML = isTab(app.cur) ? nav(app.cur) : "";
   const root = document.documentElement; root.lang = lang(); root.className = S.settings.large ? "large" : ""; root.dataset.theme = S.settings.theme || "c"; const mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.content = { a: "#1F4E79", b: "#3A3FD8", c: "#0D7C76" }[S.settings.theme || "c"]; syncCup();

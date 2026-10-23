@@ -63,7 +63,7 @@
      "path": "data/lessons/b_01/lesson.json",
      "free": true,
      "audio": null,
-     "bytes": 26369
+     "bytes": 27022
     },
     {
      "id": "b_02",
@@ -74,7 +74,7 @@
      "path": "data/lessons/b_02/lesson.json",
      "free": true,
      "audio": null,
-     "bytes": 24889
+     "bytes": 25460
     },
     {
      "id": "b_03",
@@ -85,7 +85,7 @@
      "path": "data/lessons/b_03/lesson.json",
      "free": true,
      "audio": null,
-     "bytes": 24837
+     "bytes": 25315
     }
    ]
   }

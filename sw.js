@@ -1,5 +1,5 @@
 /* Сервис-воркер: офлайн-режим. Версия и список файлов подставляются tools/build_manifest.py */
-const VERSION = "ccd8843d72";
+const VERSION = "5afcd69105";
 const CACHE = "rs-" + VERSION;
 const PRECACHE = [
  "./",
@@ -69,6 +69,7 @@ const PRECACHE = [
  "js/screens/lesson.js",
  "js/screens/onboarding.js",
  "js/screens/settings.js",
+ "js/screens/sounds.js",
  "js/srs.js",
  "js/store.js",
  "js/ui.js",

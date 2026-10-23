@@ -67,7 +67,7 @@ R.home = () => {
   const nm0 = (S.settings.name || "").trim(), head = '<div class="top" style="margin-top:-2px"><h1 class="grow">' + esc(nm0 ? t("hello_name", { name: nm0 }) : t("hello")) + "</h1></div>";
   if (th === "a") { /* «Путь»: цель недели строкой, карта пути, карточка урока */
     const route = '<div class="route" aria-label="' + esc(ui(courseOf(tr).title)) + '">' + all.map((l, k) => { const d = lessonDoneId(l.id), cur = nid === l.id; return '<div class="rt' + (d ? " done" : "") + (cur ? " cur" : "") + (l.path ? "" : " soon") + '"><span class="dot">' + (d ? IC.check : k + 1) + '</span><span class="lbl">' + esc(ui(l.title)) + "</span></div>"; }).join("") + "</div>";
-    return band() + head + pre + '<div class="card goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + '</p><span class="badge g">' + t("streak", { n: streak }) + "</span></div></div>" + card + route + tiltBtn + tail;
+    return band() + head + pre + '<div class="card goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + '</p><span class="badge g">' + t("streak", { n: streak }) + "</span></div></div>" + card + route + tiltBtn + tail; /* 0.3.5: строка с чашей остаётся первой, как было */
   }
   if (th === "b") { /* «Ы-талисман» (D-60): шапка с талисманом, дни недели, карточка урока, чаша из кода */
     const ws = weekStart(td), wd = t("wd").split(","), tdMin = P.minutes[td] || 0, dm = S.settings.dailyMin, dpct = Math.min(100, Math.round(tdMin / dm * 100));
@@ -81,8 +81,9 @@ R.home = () => {
     }
     return hdr + pre + lcard + '<div class="card3 goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + "</p></div></div>" + tiltBtn + tail;
   }
-  /* «Чаша» (по умолчанию) */
-  return band() + head + pre + card + '<div class="center">' + bowl(pct, t("weekgoal")) + '<p style="margin-top:6px"><b>' + t("min_of", { a: got, b: total }) + '</b></p><p class="small">' + t("weekgoal") + '</p>' + (got ? "" : '<p class="sub" style="margin-top:4px">' + t("home_sub") + "</p>") + '<p style="margin-top:8px"><span class="badge g">' + t("streak", { n: streak }) + '</span></p><p class="small">' + t("streak_note") + "</p></div>" + '<div class="stations">' + stations + "</div>" + tiltBtn + tail;
+  /* «Чаша» (по умолчанию). 0.3.5: чаша снова над карточкой урока (как было до 0.3.4), но компактнее —
+     чтобы кнопка урока оставалась на первом экране; серия и подсказки — под карточкой */
+  return band() + head + pre + '<div class="center cuptop">' + bowl(pct, t("weekgoal")) + '<p style="margin-top:4px"><b>' + t("min_of", { a: got, b: total }) + '</b> · <span class="small">' + t("weekgoal") + "</span></p>" + (got ? "" : '<p class="sub" style="margin-top:2px">' + t("home_sub") + "</p>") + "</div>" + card + '<div class="center"><span class="badge g">' + t("streak", { n: streak }) + '</span><p class="small" style="margin-top:6px">' + t("streak_note") + "</p></div>" + '<div class="stations">' + stations + "</div>" + tiltBtn + tail;
 };
 
 /* ---------- повторение слов ---------- */
@@ -95,7 +96,7 @@ R.review = () => {
   }
   const w = wordById(r.q[r.i]);
   return top(t("rev_title")) + steps(r.q.length, r.i) + '<div class="card center"><h2 style="font-size:2rem">' + esc(w.ru) + '</h2><button class="btn sec" style="margin-top:10px" data-act="wsay" data-v="' + esc(w.ru) + '" data-id="' + esc(w.audio) + '">' + playIcon(18, "var(--primary-d)") + t("listen") + "</button></div>" +
-    (r.shown ? '<div class="card"><p class="sub"><b>' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + '</b></p><p class="small">' + esc(hint({ ru: w.tg, tg: w.gloss_ru })) + '</p><p style="margin-top:6px">' + esc(w.ex) + '</p></div><div class="row"><button class="btn" data-act="revknow" data-v="1">' + t("rev_know") + '</button><button class="btn sec" data-act="revknow" data-v="0">' + t("rev_dont") + "</button></div>" : '<button class="btn" data-act="revshow">' + t("rev_show") + "</button>");
+    (r.shown ? '<div class="card"><p class="sub"><b>' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + '</b></p>' + (w.tg && w.tg !== w.gloss_ru ? '<p class="small">' + esc(hint({ ru: w.tg, tg: w.gloss_ru })) + "</p>" : "") + '<p style="margin-top:6px">' + esc(w.ex) + '</p></div><div class="row"><button class="btn" data-act="revknow" data-v="1">' + t("rev_know") + '</button><button class="btn sec" data-act="revknow" data-v="0">' + t("rev_dont") + "</button></div>" : '<button class="btn" data-act="revshow">' + t("rev_show") + "</button>");
 };
 ACT.revshow = () => { app.st.rev.shown = true; app.render(true); };
 ACT.revknow = e => {
