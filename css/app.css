@@ -191,3 +191,7 @@ body:not(.ready) .view{opacity:.6}
 @keyframes rock{0%,100%{transform:rotate(-3.5deg)}50%{transform:rotate(3.5deg)}}
 @media (prefers-reduced-motion:reduce){#splash .sp-wrap{animation:none}}
 a.btn{text-decoration:none}
+
+/* 0.3.3: правильный вариант после ошибки */
+.choice.good.right{border-width:3px;font-weight:700}
+.choice.good.right::after{content:"✓";margin-left:auto;color:var(--ok);font-weight:700}

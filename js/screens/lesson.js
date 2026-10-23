@@ -80,6 +80,8 @@ ACT.wsay = e => audio.playText(e.dataset.v, e.dataset.id || null, e.dataset.sp |
 ACT.wadd = e => { addCard(S.srs, e.dataset.v, today()); save(); app.render(true); app.toast(t("w_added")); };
 
 /* ---------- упражнения по lesson.flow ---------- */
+/* класс варианта: выбранный — good/soft; после ошибки правильный вариант тоже подсвечивается зелёным */
+const optCls = (E, v, isRight) => E.sel === v ? (E.fb && E.fb.ok ? " good" : " soft") : (E.fb && isRight ? " good right" : "");
 const newEx = i => ({ i, fb: null, sel: null, built: [], lb: [], typed: "", shown: false });
 ACT.exstart = () => { app.st.ex = Object.assign(newEx(0), { res: {} }); log("lesson_start", { lesson: lid() }); app.go("exer"); };
 const relatedWords = ex => {
@@ -90,8 +92,8 @@ R.exer = () => {
   const E = app.st.ex, flow = C.lesson.flow, ex = exById(flow[E.i]);
   let body = "";
   const q = o => "<h2>" + esc(ui(o)) + "</h2>";
-  if (ex.type === "choice") body = q({ ru: ex.q_ru, tg: ex.q_tg }) + '<div style="display:grid;gap:8px">' + permIdx(E, "p", ex.options.length).map(i => '<button class="choice' + (E.sel === i ? (E.fb && E.fb.ok ? " good" : " soft") : "") + '" data-act="exans" data-v="' + i + '">' + esc(ex.options[i]) + "</button>").join("") + "</div>";
-  else if (ex.type === "truefalse") body = "<h2>" + t("tf_title") + '</h2><div class="card"><p style="font-size:1.15rem">' + esc(hint({ ru: ex.ru, tg: ex.tg })) + '</p></div><div class="row"><button class="choice' + (E.sel === "t" ? (E.fb && E.fb.ok ? " good" : " soft") : "") + '" data-act="exans" data-v="t">' + t("true_") + '</button><button class="choice' + (E.sel === "f" ? (E.fb && E.fb.ok ? " good" : " soft") : "") + '" data-act="exans" data-v="f">' + t("false_") + "</button></div>";
+  if (ex.type === "choice") body = q({ ru: ex.q_ru, tg: ex.q_tg }) + '<div style="display:grid;gap:8px">' + permIdx(E, "p", ex.options.length).map(i => '<button class="choice' + optCls(E, i, i === ex.answer) + '" data-act="exans" data-v="' + i + '">' + esc(ex.options[i]) + "</button>").join("") + "</div>";
+  else if (ex.type === "truefalse") body = "<h2>" + t("tf_title") + '</h2><div class="card"><p style="font-size:1.15rem">' + esc(hint({ ru: ex.ru, tg: ex.tg })) + '</p></div><div class="row"><button class="choice' + optCls(E, "t", ex.answer === true) + '" data-act="exans" data-v="t">' + t("true_") + '</button><button class="choice' + optCls(E, "f", ex.answer === false) + '" data-act="exans" data-v="f">' + t("false_") + "</button></div>";
   else if (ex.type === "builder") {
     const av = permOf(E, "p", ex.ru_tokens, ex.answer.split(" ")); body = "<h2>" + t("ex_build") + '</h2><p class="small">' + esc(hint({ ru: ex.hint_ru, tg: ex.hint_tg }) || "") + '</p><div class="card" style="min-height:64px;display:flex;flex-wrap:wrap;gap:8px;align-items:center" aria-live="polite">' + (E.built.map((w, i) => '<button class="chip" aria-pressed="true" data-act="unbuild" data-v="' + i + '">' + esc(w) + "</button>").join("") || '<span class="small">…</span>') + '</div><div class="chips">' + av.map(w => { const u = E.built.includes(w); return '<button class="chip' + (u ? " used" : "") + '" data-act="build" data-v="' + esc(w) + '"' + (u ? " disabled" : "") + ">" + esc(w) + "</button>"; }).join("") + "</div>" + (E.fb ? "" : '<button class="btn sec" data-act="excheck">' + t("check") + "</button>");
   } else if (ex.type === "dictation") {
@@ -100,17 +102,18 @@ R.exer = () => {
     else body = "<h2>" + t("ex_type") + "</h2>" + say + (E.fb ? "" : '<input id="typed" class="inp" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" lang="ru" placeholder="' + t("dict_ph") + '" aria-label="' + t("dict_ph") + '"><p class="small">' + t("kb_note") + '</p><button class="btn sec" data-act="excheck">' + t("check") + "</button>");
   } else if (ex.type === "meaning") {
     const mw = wordById(ex.word), opts = permOf(E, "p", ex.options).map(id => wordById(id));
-    body = "<h2>" + t("ex_mean") + '</h2><div class="card center"><h2 style="font-size:2rem">' + esc(mw.ru) + '</h2><button class="btn sec" style="margin-top:10px" data-act="exsay" data-v="' + esc(mw.ru) + '" data-id="' + esc(mw.audio) + '">' + playIcon(18, "var(--primary-d)") + t("listen") + '</button></div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + (E.sel === w.id ? (E.fb && E.fb.ok ? " good" : " soft") : "") + '" data-act="exans" data-v="' + w.id + '">' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + "</button>").join("") + "</div>";
+    body = "<h2>" + t("ex_mean") + '</h2><div class="card center"><h2 style="font-size:2rem">' + esc(mw.ru) + '</h2><button class="btn sec" style="margin-top:10px" data-act="exsay" data-v="' + esc(mw.ru) + '" data-id="' + esc(mw.audio) + '">' + playIcon(18, "var(--primary-d)") + t("listen") + '</button></div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + optCls(E, w.id, w.id === ex.word) + '" data-act="exans" data-v="' + w.id + '">' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + "</button>").join("") + "</div>";
   } else if (ex.type === "pictures") {
     const opts = permOf(E, "p", ex.options).map(id => wordById(id));
-    body = "<h2>" + t("ex_pic") + '</h2><div class="pic" style="width:100%;height:150px;border-radius:18px" role="img" aria-label="' + t("ex_pic") + '">' + PICS[ex.id] + '</div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + (E.sel === w.id ? (E.fb && E.fb.ok ? " good" : " soft") : "") + '" data-act="exans" data-v="' + w.id + '">' + esc(w.ru) + "</button>").join("") + "</div>";
+    body = "<h2>" + t("ex_pic") + '</h2><div class="pic" style="width:100%;height:150px;border-radius:18px" role="img" aria-label="' + t("ex_pic") + '">' + PICS[ex.id] + '</div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + optCls(E, w.id, w.id === ex.word) + '" data-act="exans" data-v="' + w.id + '">' + esc(w.ru) + "</button>").join("") + "</div>";
   } else { /* free */
     body = "<h2>" + esc(ui({ ru: ex.q_ru, tg: ex.q_tg })) + '</h2><textarea id="free" placeholder="' + t("dict_ph") + '" aria-label="' + esc(ui({ ru: ex.q_ru, tg: ex.q_tg })) + '" lang="ru"></textarea><p class="small">' + t("kb_note") + '</p><p class="small">' + esc(hint({ ru: ex.note_ru, tg: ex.note_tg })) + "</p>" +
       (E.shown ? '<div class="card" style="background:var(--tint)"><p class="small"><b>' + t("ex_ref_h") + '</b></p><h3 style="margin-top:4px">' + esc(ex.reference) + "</h3></div>" + (E.fb ? "" : "<h3>" + t("ex_self") + '</h3><div class="row"><button class="btn" data-act="exself" data-v="1">' + t("ex_same") + '</button><button class="btn sec" data-act="exself" data-v="0">' + t("ex_redo") + "</button></div>") : '<button class="btn sec" data-act="exref">' + t("ex_ref") + "</button>");
   }
   let fb = "";
   if (E.fb) { const expl = ex.expl_ru ? esc(hint({ ru: ex.expl_ru, tg: ex.expl_tg })) : ""; fb = fbCard(E.fb.ok, (E.fb.ok ? t("fb_ok") : (E.fb.right ? t("fb_soft") + esc(E.fb.right) : t("ex_redo"))) + (expl ? '<span class="small" style="display:block;font-weight:400;margin-top:4px">' + expl + "</span>" : "")) + '<button class="btn" data-act="exnext">' + t("next") + "</button>"; }
-  return top(t("ex_title")) + steps(flow.length, E.i) + body + fb;
+  const errBtn = '<button class="btn ghost small" data-act="exerr">' + t("ex_err") + "</button>";
+  return top(t("ex_title")) + steps(flow.length, E.i) + body + fb + errBtn;
 };
 function exFinish(ex, ok, right) {
   const E = app.st.ex; if (E.fb) return; E.fb = { ok, right: right || "" }; E.res[ex.id] = ok;
@@ -130,8 +133,10 @@ ACT.lb = e => { const E = app.st.ex; if (E.fb) return; const k = +e.dataset.v; i
 ACT.unlb = e => { const E = app.st.ex; if (E.fb) return; E.lb.splice(+e.dataset.v, 1); app.render(true); };
 ACT.excheck = () => { const ex = curEx(), E = app.st.ex; if (E.fb) return;
   if (ex.type === "builder") exFinish(ex, norm(E.built.join(" ")) === norm(ex.answer), ex.answer);
-  else if (ex.type === "dictation") { if (ex.kind === "letters") { const L = plain(ex.answer).split(""); exFinish(ex, E.lb.map(k => L[k]).join("") === L.join(""), plain(ex.answer)); } else { const el = document.getElementById("typed"); exFinish(ex, norm(el ? el.value : "") === norm(ex.answer), plain(ex.answer)); } } };
+  else if (ex.type === "dictation") { if (ex.kind === "letters") { const L = plain(ex.answer).split(""); exFinish(ex, E.lb.map(k => L[k]).join("") === L.join(""), plain(ex.answer)); } else { const el = document.getElementById("typed"); const ans = plain(ex.answer); exFinish(ex, norm(el ? el.value : "") === norm(ex.answer), isName(norm(ans)) ? ans.charAt(0).toUpperCase() + ans.slice(1) : ans); } } };
 ACT.exsay = e => audio.playText(e.dataset.v, e.dataset.id || null);
+/* сообщение об ошибке в конкретном задании: категория «Ошибка в тексте или переводе», номер урока и задания подставляются сами */
+ACT.exerr = () => { const ex = curEx(); app.st.rep = { kind: 1, sent: false, logs: false, text: t("ex_err_pre", { l: lid(), e: ex.id }) + " ", back: true }; log("exercise_report", { item: ex.id }); app.go("report"); };
 ACT.exref = () => { app.st.ex.shown = true; app.render(true); };
 ACT.exself = e => { const ex = curEx(); exFinish(ex, e.dataset.v === "1", ""); };
 ACT.exnext = () => { const E = app.st.ex, n = C.lesson.flow.length; if (E.i < n - 1) { const res = E.res; app.st.ex = Object.assign(newEx(E.i + 1), { res }); app.render(false); app.scrollTop(); } else { app.st.shadow = { i: 0, step: 0 }; app.go("shadow"); } };

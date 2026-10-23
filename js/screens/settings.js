@@ -31,7 +31,7 @@ R.settings = () => {
     "<h3>" + t("offline_h") + '</h3><div class="card"><div class="li"><span class="tick on">' + IC.check + '</span><span class="grow">' + t("off_l1") + '</span></div><p class="small">' + (isPersistent() ? t("store_ok") : t("store_bad")) + "</p></div>" +
     (isStandalone() ? '<p class="small">' + t("ios_done") + "</p>" : isIOS() ? '<div class="card"><b>' + t("ios_h") + "</b>" + iosSteps() + "</div>" : '<button class="btn sec" id="installbtn" data-act="install">' + t("install") + '</button><p class="small" id="installnote">' + t("install_help") + "</p>") +
     '<h3>' + t("share_h") + '</h3><button class="btn sec" data-act="share">' + t("share_btn") + '</button>' +
-    '<button class="btn sec" data-go="report" style="margin-top:10px">' + t("report") + "</button>" +
+    '<button class="btn sec" data-act="repopen" style="margin-top:10px">' + t("report") + "</button>" +
     "<h3>" + t("data_h") + '</h3><div class="row" style="flex-wrap:wrap"><button class="btn sec" data-act="export">' + t("export") + '</button><label class="btn sec" style="cursor:pointer">' + t("import") + '<input id="impfile" type="file" accept="application/json,.json" style="display:none" data-act-change="import"></label></div><p class="small">' + t("data_note") + "</p>" + confirm + '<button class="btn ghost" data-act="resetask">' + t("reset") + "</button>" +
     (!CONFIG.DEV_PANEL ? '<p class="small" style="margin-top:12px">' + t("ver") + ": " + CONFIG.APP_VERSION + "</p>" : '<details class="card"><summary><b>' + t("dev_h") + "</b></summary><p class=\"small\">" + t("dev_note") + "</p><ul class=\"small\">" + cl + '</ul><p class="small">' + t("ver") + ": " + CONFIG.APP_VERSION + '</p><div class="chips" style="margin-top:8px">' + dev + "</div></details>");
 };
@@ -58,10 +58,12 @@ ACT.dev = e => { const id = e.dataset.v; app.st.diag = { set: id === "diagb" ? "
 /* ---------- Сообщить о проблеме (D-26, D-32) ---------- */
 R.report = () => {
   const r = app.st.rep || (app.st.rep = { kind: null, sent: false, logs: false, text: "" });
-  if (r.sent) return top(t("rep_title")) + '<div class="card center"><h2>' + (CONFIG.REPORT_TO ? t("rep_thanks") : t("rep_copied")) + '</h2></div><p class="small">' + t("rep_after") + '</p><textarea readonly id="repout" aria-label="' + t("rep_title") + '">' + esc(r.out || "") + '</textarea><button class="btn" data-go="settings">' + t("done") + "</button>";
+  if (r.sent) return top(t("rep_title")) + '<div class="card center"><h2>' + (CONFIG.REPORT_TO ? t("rep_thanks") : t("rep_copied")) + '</h2></div><p class="small">' + t("rep_after") + '</p><textarea readonly id="repout" aria-label="' + t("rep_title") + '">' + esc(r.out || "") + '</textarea>' + (r.back ? '<button class="btn" data-act="repback">' + t("done") + "</button>" : '<button class="btn" data-go="settings">' + t("done") + "</button>");
   const ks = ["rk1", "rk2", "rk3", "rk4"].map((k, i) => '<button class="choice" data-act="rk" data-v="' + i + '" aria-pressed="' + (r.kind === i) + '">' + t(k) + "</button>").join("");
   return top(t("rep_title")) + "<h3>" + t("rep_kind") + '</h3><div style="display:grid;gap:8px">' + ks + '</div><textarea id="reptext" placeholder="' + t("rep_ph") + '" aria-label="' + t("rep_ph") + '">' + esc(r.text) + '</textarea><button class="choice" data-act="replog" aria-pressed="' + r.logs + '">' + t("rep_logs") + '</button><p class="small">' + t("rep_auto") + '</p><p class="small">' + t("rep_info") + '</p><div class="grow"></div><button class="btn" data-act="repsend"' + (r.kind === null ? " disabled" : "") + ">" + (CONFIG.REPORT_TO ? t("send") : t("rep_copy")) + "</button>";
 };
+ACT.repopen = () => { app.st.rep = null; app.go("report"); };
+ACT.repback = () => { app.st.rep = null; app.back(); };
 const keepText = () => { const el = document.getElementById("reptext"); if (el && app.st.rep) app.st.rep.text = el.value; };
 ACT.rk = e => { keepText(); app.st.rep.kind = +e.dataset.v; app.render(true); };
 ACT.replog = () => { keepText(); app.st.rep.logs = !app.st.rep.logs; app.render(true); };
