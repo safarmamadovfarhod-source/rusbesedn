@@ -129,3 +129,19 @@ test("грамматика: темы и ссылки на задания (0.3.6)
     for (const [k, v] of Object.entries(m.rules || {})) { assert.ok(rIds.has(k), lid + ": нет правила " + k); assert.ok(ids.has(v)); }
   }
 });
+
+test("словарь терминов (0.3.7): поля заполнены, ссылки верны, образцы подсветки компилируются", () => {
+  const G = JSON.parse(fs.readFileSync(new URL("../data/glossary.json", import.meta.url), "utf8"));
+  const GR = JSON.parse(fs.readFileSync(new URL("../data/grammar.json", import.meta.url), "utf8"));
+  const ids = new Set(G.terms.map(x => x.id)), groups = new Set(G.groups.map(g => g.id)), topics = new Set(GR.topics.map(x => x.id));
+  assert.ok(G.terms.length >= 20 && G.terms.length <= 30, "20–30 терминов");
+  assert.strictEqual(ids.size, G.terms.length, "id уникальны");
+  for (const x of G.terms) {
+    assert.ok(groups.has(x.group), x.id + ": группа");
+    for (const k of ["term", "short", "more", "cmp"]) assert.ok(x[k] && x[k].ru && x[k].tg, x.id + ": " + k);
+    assert.ok(x.ex && x.ex.length >= 1 && x.ex.every(e => e.ru && e.tg), x.id + ": примеры");
+    if (x.topic) assert.ok(topics.has(x.topic), x.id + ": тема " + x.topic);
+    for (const s of x.see) assert.ok(ids.has(s), x.id + ": see " + s);
+    for (const p of [...x.match.ru, ...x.match.tg]) new RegExp("(?<![\\p{L}\\u0301-])(?:" + p + ")(?![\\p{L}\\u0301])", "giu");
+  }
+});

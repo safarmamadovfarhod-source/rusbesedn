@@ -30,4 +30,4 @@ export function top(title, opts) {
   return '<div class="top">' + (opts.back === false ? "" : '<button class="icon-btn" data-back aria-label="' + esc(t("back")) + '">' + IC.back + "</button>") + '<div class="ttl">' + title + "</div>" + (opts.right || "") + "</div>";
 }
 export const steps = (n, i) => '<div class="steps" aria-hidden="true">' + Array.from({ length: n }, (_, k) => "<i" + (k <= i ? ' class="on"' : "") + "></i>").join("") + "</div>";
-export const fbCard = (ok, text) => '<div class="card" role="status" style="background:' + (ok ? "var(--tint)" : "#FFF5E2") + '"><b>' + text + "</b></div>";
+export const fbCard = (ok, text) => '<div class="card" role="status" style="background:' + (ok ? "var(--tint)" : "var(--warm)") + '"><b>' + text + "</b></div>";

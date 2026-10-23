@@ -66,7 +66,7 @@ with sync_playwright() as p:
         cont.first.click(); wait(page, 500)
     body = page.inner_text("body")
     check("урок продолжается со второго задания", "Верно или неверно?" in body, body[:80])
-    check("«Верно/неверно»: русская фраза на экране", "Руслан говорит" in body)
+    check("«Верно/неверно»: русская фраза на экране", "Руслан говорит" in body.replace("\u0301", ""))
 
     # кнопка «назад» телефона: из упражнения — не выход из приложения
     page.go_back(); wait(page, 600)
@@ -81,7 +81,7 @@ with sync_playwright() as p:
         body = page.inner_text("body")
         if "Урок пройден" in body:
             break
-        for name in ["Дальше", "Проверить", "Получилось", "Я повторил(а)", "Совпало", "Показать эталон"]:
+        for name in ["Дальше", "Проверить", "Получилось", "Я повторил(а)", "Совпало", "Показать образец"]:
             loc = page.get_by_role("button", name=name, exact=True)
             if loc.count() and loc.first.is_enabled():
                 if name == "Проверить":
@@ -133,6 +133,19 @@ with sync_playwright() as p:
     check("«Грамматика»: есть открытые темы", page.locator(".gtile:not(.locked)").count() > 0)
     page.locator(".gtile:not(.locked)").first.click(); wait(page)
     check("тема: правило, примеры, проверка", page.locator(".grule").count() == 1 and page.locator(".gexr").count() > 0 and page.locator("button[data-act=gans]").count() > 0)
+
+    # словарь терминов (0.3.7)
+    page.goto(URL); wait(page, 700)
+    btn(page, "Грамматика").click(); wait(page)
+    page.locator(".gloss-entry").click(); wait(page)
+    check("«Словарь терминов»: не меньше 20 терминов", page.locator("[data-act=gtermopen]").count() >= 20)
+    page.locator("[data-act=gtermopen][data-v=case]").click(); wait(page)
+    terms = page.locator("#view button.term")
+    ok = terms.count() > 0
+    if ok:
+        terms.first.click(); wait(page)
+        ok = page.locator(".tsheet").count() == 1 and page.locator(".tsheet [data-act=termmore]").count() == 1
+    check("термин подсвечен, по нажатию открывается карточка", ok)
 
     # офлайн после первой загрузки
     page.goto(URL); wait(page, 1500)

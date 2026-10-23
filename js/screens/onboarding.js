@@ -18,7 +18,7 @@ const opt = (act, v, on, title, sub, pre) => '<button class="choice" data-act="'
 const nextBtn = (ok, act) => '<div class="grow"></div>' + (ok ? '<button class="btn" data-act="' + (act || "obnext") + '">' + t("ob_next") + "</button>" : "");
 
 /* 1. язык: только два слова, без текста об уроках */
-R.lang = () => band() + '<div class="grow"></div><div class="center"><h1>Забон · Язык</h1><p class="sub" style="margin-top:8px">Забони барномаро интихоб кунед<br>Выберите язык приложения</p></div>' +
+R.lang = () => band() + '<div class="grow"></div><div class="center"><h1>Забон · Язык</h1><p class="sub" style="margin-top:8px">Забони барномаро интихоб кунед<br>Выберите язык интерфейса</p></div>' +
   '<div style="display:grid;gap:12px;margin-top:8px"><button class="btn" data-act="setlang" data-v="tg" lang="tg">Тоҷикӣ</button><button class="btn" data-act="setlang" data-v="ru" lang="ru">Русский</button></div><div class="grow"></div>';
 ACT.setlang = e => { S.settings.uiLang = e.dataset.v; save(); log("lang_set", { lang: e.dataset.v }); if (app.cur === "lang") app.go("path"); else app.render(true); };
 

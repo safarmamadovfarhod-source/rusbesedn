@@ -16,6 +16,7 @@ import "./screens/dialog.js";
 import "./screens/settings.js";
 import "./screens/sounds.js";
 import "./screens/grammar.js";
+import "./screens/glossary.js";
 import { sheetHtml } from "./screens/lesson.js";
 
 const TABS = ["home", "words", "talk", "grammar", "settings"];
@@ -23,6 +24,8 @@ const $ = s => document.querySelector(s);
 const isTab = id => TABS.includes(id);
 app.applyTheme = () => { document.documentElement.dataset.theme = S.settings.theme || "c"; };
 app.scrollTop = bottom => { const v = $("#view"); if (v) v.scrollTop = bottom ? v.scrollHeight : 0; };
+/* 0.3.7 (аудит 7.1): короткие объявления для экранного диктора вместо чтения всего экрана */
+app.say = msg => { const r = $("#srlive"); if (!r) return; r.textContent = ""; setTimeout(() => { r.textContent = msg; }, 60); };
 app.toast = msg => { const old = $(".toast"); if (old) old.remove(); const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = msg; $("#phone").appendChild(d); setTimeout(() => d.remove(), 2400); };
 
 app.render = keep => {
@@ -43,7 +46,7 @@ app.go = (id, o) => {
   app.cur = id; app.view = id; app.render(false); const v = $("#view"); v.scrollTop = 0;
   if (!o.keepFocus) { const s = v.querySelector(".scr"); if (s) s.focus({ preventScroll: true }); }
 };
-app.back = () => { const p = app.stack.pop(); if (p) { app.cur = p; app.st.sheet = null; app.render(false); const s = $("#view .scr"); if (s) s.focus({ preventScroll: true }); } else app.go("home", { noPush: true }); };
+app.back = () => { const r = app.retTop ? app.retTop() : null, p = app.stack.pop(); if (p) { app.cur = p; app.st.sheet = null; if (r) { app.st.gs.pop(); if (r.sheet && p === r.from) app.st.sheet = r.sheet; } app.render(false); const s = $("#view .scr"); if (s) s.focus({ preventScroll: true }); } else app.go("home", { noPush: true }); };
 
 document.addEventListener("click", ev => {
   const a = ev.target.closest("[data-act]"), g = ev.target.closest("[data-go]"), b = ev.target.closest("[data-back]");
@@ -54,6 +57,8 @@ document.addEventListener("click", ev => {
   if (g) { app.st.rep = null; app.go(g.dataset.go); return; }
   if (b) { app.back(); }
 });
+/* фокус с клавиатуры не прячется под нижним меню (аудит 7.6) */
+document.addEventListener("focusin", ev => { const el = ev.target; if (el && el.closest && el.closest("#view") && el.scrollIntoView) { try { el.scrollIntoView({ block: "nearest" }); } catch (e) { } } });
 document.addEventListener("change", ev => { const el = ev.target.closest("[data-act-change]"); if (el && app.ACT[el.dataset.actChange]) app.ACT[el.dataset.actChange](el); });
 document.addEventListener("keydown", ev => { if (ev.key === "Escape" && app.st.sheet) { app.st.sheet = null; app.render(true); } });
 /* Кнопка «назад» телефона (0.3.4, аудит В6): держим одну «запасную» запись в истории браузера.
@@ -89,7 +94,7 @@ document.addEventListener("visibilitychange", () => {
   if (hiddenAt && Date.now() - hiddenAt >= AWAY_MS && S.onboarded) showSplash();
   hiddenAt = 0;
 });
-app.ACT.tiltask = async () => { const ok = await askTilt(); app.render(true); if (!ok) app.toast(t("tilt_note")); };
+app.ACT.tiltask = async () => { S.tiltAsked = true; save(); const ok = await askTilt(); app.render(true); if (!ok) app.toast(t("tilt_note")); };
 app.ACT.settilt = e => { setTilt(e.dataset.v === "on"); app.render(true); };
 
 async function boot() {
@@ -115,7 +120,7 @@ async function boot() {
     document.body.classList.add("ready");
   } catch (e) {
     logError(e && e.message);
-    $("#view").innerHTML = '<div class="scr"><h2>Ошибка загрузки / Хатои боргирӣ</h2><p>' + String(e && e.message).replace(/[<>&]/g, "") + '</p><button class="btn" onclick="location.reload()">OK</button></div>';
+    $("#view").innerHTML = '<div class="scr"><h2>Ошибка загрузки / Хатои боргирӣ</h2><p>' + String(e && e.message).replace(/[<>&]/g, "") + '</p><button class="btn" onclick="location.reload()">ОК</button></div>';
   }
   if ("serviceWorker" in navigator) { try { await navigator.serviceWorker.register("sw.js"); } catch (e) { /* офлайн-режим недоступен (например, не HTTPS) */ } }
 }
