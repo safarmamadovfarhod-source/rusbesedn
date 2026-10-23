@@ -54,7 +54,7 @@ with sync_playwright() as p:
 
     btn(page, "Начать").click(); wait(page, 500)
     btn(page, "К упражнениям").click(); wait(page)
-    page.locator("button.choice", has_text="Спаси́бо, А́нна.").click(); wait(page)
+    page.locator("button.choice", has_text="Спаси́бо, Шарора́.").click(); wait(page)
     check("после ошибки подсвечен правильный ответ", page.locator("button.choice.good.right").count() == 1)
 
     # продолжение после перезагрузки (звонок, закрытие вкладки)
@@ -66,7 +66,7 @@ with sync_playwright() as p:
         cont.first.click(); wait(page, 500)
     body = page.inner_text("body")
     check("урок продолжается со второго задания", "Верно или неверно?" in body, body[:80])
-    check("«Верно/неверно»: русская фраза на экране", "Руслан говорит" in body.replace("\u0301", ""))
+    check("«Верно/неверно»: русская фраза на экране", "Манучехр говорит" in body.replace("\u0301", ""))
 
     # кнопка «назад» телефона: из упражнения — не выход из приложения
     page.go_back(); wait(page, 600)
@@ -77,8 +77,11 @@ with sync_playwright() as p:
     page.get_by_role("button", name=re.compile("Продолжить с задания|Начать")).first.click(); wait(page, 500)
     if page.get_by_role("button", name="К упражнениям", exact=True).count():
         btn(page, "К упражнениям").click(); wait(page)
-    for _ in range(90):
+    seen_fix = False
+    for _ in range(300):
         body = page.inner_text("body")
+        if "Исправляем ошибки" in body:
+            seen_fix = True
         if "Урок пройден" in body:
             break
         for name in ["Дальше", "Проверить", "Получилось", "Я повторил(а)", "Совпало", "Показать образец"]:
@@ -98,6 +101,7 @@ with sync_playwright() as p:
                 break
             choices.first.click(); wait(page, 250)
     check("урок проходится до конца", "Урок пройден" in page.inner_text("body"))
+    check("задания с ошибками повторяются в конце", seen_fix)
     state = page.evaluate("JSON.parse(localStorage.rs_state_v1)")
     check("после урока сохранённое место очищено", not state.get("resume"))
 
@@ -109,7 +113,7 @@ with sync_playwright() as p:
     page.locator("button.choice", has_text="Мне то́же").first.click(); wait(page)
     btn(page, "Дальше").click(); wait(page, 500)
     check("диалог: после ответа «ok» нужно выбрать подходящий", "подходит лучше" in page.inner_text("body"))
-    check("диалог: имя в таджикском переводе без ударения", "Номи ман А́нна" not in page.inner_text("body"))
+    check("диалог: имя в таджикском переводе без ударения", "Номи ман Шарора́" not in page.inner_text("body"))
 
     # «Ещё» — меню разделов, «Звуки» и тренировка на слух (0.3.5)
     page.goto(URL); wait(page, 700)

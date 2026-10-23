@@ -158,7 +158,7 @@ R.result = () => {
 R.resultb = () => {
   const tv = topicsView(), nid = nextLessonId("b"), first = nid ? ui(C.lessons[nid].meta.title) : "";
   const rows = tv.map(x => '<div class="li"><span class="tick' + (x.strong ? " on" : "") + '">' + (x.strong ? IC.check : "") + '</span><span class="grow">' + esc(x.title) + '</span><span class="badge ' + (x.strong ? "g" : "") + '">' + (x.strong ? t("strong_s") : t("weak_s")) + "</span></div>").join("");
-  return band() + "<h1>" + t("res_b_title") + '</h1><div class="card">' + rows + '</div><p class="sub">' + t("res_b_text") + "</p>" + (first ? "<p><b>" + t("res_b_first", { t: esc(first) }) + "</b></p>" : "") + "<p>" + t("res_b_pace", { n: S.settings.dailyMin * 6 }) + '</p><div class="grow"></div><button class="btn" data-act="tohome">' + t("continue") + "</button>";
+  return band() + "<h1>" + t("res_b_title") + "</h1>" + (rows ? '<div class="card">' + rows + "</div>" : "") + '<p class="sub">' + t("res_b_text") + "</p>" + (first ? "<p><b>" + t("res_b_first", { t: esc(first) }) + "</b></p>" : "") + "<p>" + t("res_b_pace", { n: S.settings.dailyMin * 6 }) + '</p><div class="grow"></div><button class="btn" data-act="tohome">' + t("continue") + "</button>";
 };
 
 /* ---- тест на пропуск урока (8 вопросов из lesson.json) ---- */

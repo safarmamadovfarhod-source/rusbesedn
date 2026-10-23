@@ -1,5 +1,5 @@
 /* Сервис-воркер: офлайн-режим. Версия и список файлов подставляются tools/build_manifest.py */
-const VERSION = "b77f6bf211";
+const VERSION = "54d4a9fd06";
 const CACHE = "rs-" + VERSION;
 const PRECACHE = [
  "./",
@@ -47,12 +47,15 @@ const PRECACHE = [
  "img/ic22.webp",
  "img/ic23.webp",
  "img/ic24.webp",
+ "img/learner.webp",
  "img/m01.webp",
  "img/m02.webp",
  "img/m03.webp",
  "img/m04.webp",
  "img/m05.webp",
  "img/m06.webp",
+ "img/manuchehr.webp",
+ "img/sharora.webp",
  "index.html",
  "js/analytics.js",
  "js/app.js",
@@ -81,7 +84,9 @@ const PRECACHE = [
  "manifest.webmanifest"
 ];
 
-self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())); });
+/* 0.3.7.1: файлы берём мимо кэша браузера (cache: "reload"). Иначе при обновлении в новый кэш попадали
+   старые копии из кэша браузера (GitHub Pages держит их 10 минут): версия новая, а стили и уроки — старые. */
+self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith("rs-") && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 
 /* Медиа запрашивается с заголовком Range: отдаём нужный кусок из кэша */

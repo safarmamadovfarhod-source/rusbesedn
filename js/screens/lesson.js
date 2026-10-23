@@ -6,7 +6,7 @@ import { termSheet, tx } from "./glossary.js";
 import { C, findWord, findGrammar, isName, exById, wordById, nextLessonId, setCurrent } from "../content.js";
 import { esc, norm, plain, shuffle, permOf, permIdx } from "../util.js";
 import { band, top, steps, bowl, fbCard, playIcon, IC } from "../ui.js";
-import { PICS, wordIcon } from "../pics.js";
+import { PICS, wordIcon, avatar, wordImgSrc } from "../pics.js";
 import { log } from "../analytics.js";
 import * as audio from "../audio.js";
 import { addCard, review } from "../srs.js";
@@ -24,7 +24,7 @@ R.lesson = () => {
   h += '<div class="card" style="padding:6px 14px">';
   L.text.forEach((l, i) => {
     const ws = l.ru.split(" ").map((w, k) => '<button class="w" data-act="word" data-v="' + norm(w) + '" data-l="' + i + '" data-i="' + k + '">' + esc(w) + "</button>").join(" ");
-    h += '<div class="line"><span class="sp ' + l.s + '" aria-hidden="true">' + (l.s === "f" ? "А" : "Р") + '</span><div class="words"><span lang="ru">' + ws + '</span>' + (S.showTr !== false && hasTr() && l.tg ? '<span class="tr" lang="tg">' + esc(l.tg) + "</span>" : "") + '</div><button class="play" data-act="playline" data-v="' + i + '" aria-label="' + t("listen") + '">' + IC.play + "</button></div>";
+    h += '<div class="line">' + avatar(l.s) + '<div class="words"><span lang="ru">' + ws + '</span>' + (S.showTr !== false && hasTr() && l.tg ? '<span class="tr" lang="tg">' + esc(l.tg) + "</span>" : "") + '</div><button class="play" data-act="playline" data-v="' + i + '" aria-label="' + t("listen") + '">' + IC.play + "</button></div>";
   });
   /* 0.3.7: «К упражнениям» всегда видна — закреплённая панель внизу (аудит 1.3) */
   h += '</div><p class="small" id="vnote">' + voiceNote() + '</p><div class="dock">' + (L.rules ? '<button class="btn sec" data-go="rules">' + t("to_rules") + "</button>" : "") + '<button class="btn" data-act="exstart">' + t("to_ex") + "</button></div>";
@@ -63,7 +63,7 @@ export function sheetHtml() {
   const sh = app.st.sheet; if (!sh) return "";
   if (sh.term) return termSheet(sh);
   const n = sh.w, w = findWord(n), g = findGrammar(n, sh.l), name = isName(n);
-  const title = w ? w.ru : (name ? (n === "анна" ? "А́нна" : "Русла́н") : (sh.txt || n));
+  const title = w ? w.ru : (name ? (n === "шарора" ? "Шарора́" : "Мануче́хр") : (sh.txt || n));
   const added = !!S.srs[w ? w.id : ""];
   const tabs = '<div class="seg" role="tablist"><button role="tab" data-act="sheettab" data-v="word" aria-pressed="' + (sh.tab === "word") + '">' + t("tab_word") + '</button><button role="tab" data-act="sheettab" data-v="why" aria-pressed="' + (sh.tab === "why") + '">' + t("tab_why") + "</button></div>";
   let body;
@@ -75,7 +75,7 @@ export function sheetHtml() {
   }
   const wordPlay = '<button class="btn" data-act="wsay" data-v="' + esc(title) + '" data-id="' + esc(w ? w.audio : "") + '">' + playIcon(18) + t("listen") + "</button>";
   const addBtn = w ? '<button class="btn sec" data-act="wadd" data-v="' + w.id + '"' + (added ? ' aria-pressed="true"' : "") + ">" + (added ? t("w_added") : t("w_add")) + "</button>" : "";
-  return '<div class="sheet-bg" data-act="closesheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(plain(title)) + '" data-stop><div class="row" style="align-items:center;flex:none"><div class="pic" aria-hidden="true">' + wordIcon(w) + '</div><div style="flex:3"><h2 style="font-size:1.6rem">' + esc(title) + "</h2>" + (sh.tab === "word" ? "" : "") + "</div></div>" + tabs + body + '<div class="row">' + wordPlay + addBtn + '</div><button class="btn ghost" data-act="closesheet">' + t("w_close") + "</button></div></div>";
+  return '<div class="sheet-bg" data-act="closesheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(plain(title)) + '" data-stop><div class="row" style="align-items:center;flex:none"><div class="pic" aria-hidden="true">' + (name ? avatar(n === "шарора" ? "f" : "m", 56) : wordIcon(w)) + '</div><div style="flex:3"><h2 style="font-size:1.6rem">' + esc(title) + "</h2>" + (sh.tab === "word" ? "" : "") + "</div></div>" + tabs + body + '<div class="row">' + wordPlay + addBtn + '</div><button class="btn ghost" data-act="closesheet">' + t("w_close") + "</button></div></div>";
 }
 ACT.word = e => { app.st.sheet = { w: e.dataset.v, tab: "word", l: e.dataset.l != null ? +e.dataset.l : null, txt: e.classList.contains("w") ? e.textContent.replace(/[.,!?;:]+$/, "") : null }; log("word_tap", { item: e.dataset.v }); app.render(true); };
 ACT.sheettab = e => { app.st.sheet.tab = e.dataset.v; app.render(true); };
@@ -86,7 +86,7 @@ ACT.wadd = e => { addCard(S.srs, e.dataset.v, today()); save(); app.render(true)
 /* ---------- упражнения по lesson.flow ---------- */
 /* класс варианта: выбранный — good/soft; после ошибки правильный вариант тоже подсвечивается зелёным */
 /* образец «Меня зовут …» с именем человека, если он его указал (0.3.4, аудит М6) */
-const refFor = r => { const nm = (S.settings.name || "").trim(); return nm ? String(r).replace("А́нна", nm) : r; };
+const refFor = r => { const nm = (S.settings.name || "").trim(); return nm ? String(r).replace("Шарора́", nm) : r; };
 const lowFirst = x => { const s = String(x || ""); return s.charAt(0).toLowerCase() + s.slice(1); };
 const optCls = (E, v, isRight) => E.sel === v ? (E.fb && E.fb.ok ? " good" : " soft") : (E.fb && isRight ? " good right" : "");
 const newEx = i => ({ i, fb: null, sel: null, built: [], lb: [], typed: "", shown: false });
@@ -120,7 +120,7 @@ R.exer = () => {
     body = "<h2>" + t("ex_mean") + '</h2><div class="card center"><h2 style="font-size:2rem">' + esc(mw.ru) + '</h2><button class="btn sec" style="margin-top:10px" data-act="exsay" data-v="' + esc(mw.ru) + '" data-id="' + esc(mw.audio) + '">' + playIcon(18, "var(--primary-d)") + t("listen") + '</button></div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + optCls(E, w.id, w.id === ex.word) + '" data-act="exans" data-v="' + w.id + '">' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + "</button>").join("") + "</div>";
   } else if (ex.type === "pictures") {
     const opts = permOf(E, "p", ex.options).map(id => wordById(id));
-    body = "<h2>" + t("ex_pic") + '</h2><div class="pic" style="width:100%;height:150px;border-radius:18px" role="img" aria-label="' + t("ex_pic") + '">' + PICS[ex.id] + '</div><div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + optCls(E, w.id, w.id === ex.word) + '" data-act="exans" data-v="' + w.id + '" lang="ru">' + esc(lowFirst(w.ru)) + "</button>").join("") + "</div>";
+    body = "<h2>" + t("ex_pic") + '</h2>' + (wordImgSrc(wordById(ex.word)) ? '<div class="pic expic"><img src="' + wordImgSrc(wordById(ex.word)) + '" alt="' + t("ex_pic") + '"></div>' : '<div class="pic" style="width:100%;height:150px;border-radius:18px" role="img" aria-label="' + t("ex_pic") + '">' + PICS[ex.id] + "</div>") + '<div style="display:grid;gap:8px">' + opts.map(w => '<button class="choice' + optCls(E, w.id, w.id === ex.word) + '" data-act="exans" data-v="' + w.id + '" lang="ru">' + esc(lowFirst(w.ru)) + "</button>").join("") + "</div>";
   } else { /* free */
     body = "<h2>" + esc(ui({ ru: ex.q_ru, tg: ex.q_tg })) + '</h2><textarea id="free" placeholder="' + t("dict_ph") + '" aria-label="' + esc(ui({ ru: ex.q_ru, tg: ex.q_tg })) + '" lang="ru"></textarea><p class="small">' + t("kb_note") + '</p><p class="small">' + esc(hint({ ru: ex.note_ru, tg: ex.note_tg })) + "</p>" +
       (E.shown ? '<div class="card" style="background:var(--tint)"><p class="small"><b>' + t("ex_ref_h") + '</b></p><h3 style="margin-top:4px">' + esc(refFor(ex.reference)) + "</h3></div>" + (E.fb ? "" : "<h3>" + t("ex_self") + '</h3><div class="row"><button class="btn" data-act="exself" data-v="1">' + t("ex_same") + '</button><button class="btn sec" data-act="exself" data-v="0">' + t("ex_redo") + "</button></div>") : '<button class="btn sec" data-act="exref">' + t("ex_ref") + "</button>");
@@ -133,13 +133,14 @@ R.exer = () => {
     fb = '<div class="dock ' + (E.fb.ok ? "fb-ok" : "fb-bad") + '" role="status"><div class="fbh"><i aria-hidden="true">' + (E.fb.ok ? "✓" : "✕") + "</i><span>" + head + "</span></div>" + (expl ? '<p class="fbx">' + expl + "</p>" : "") + moreBtn(topicFor(lid(), "ex", ex.id), !E.fb.ok) + '<button class="btn" data-act="exnext">' + t("next") + "</button></div>";
   }
   const errBtn = '<button class="exerr" data-act="exerr">' + t("ex_err") + "</button>";
-  return top(t("ex_title")) + steps(flow.length, E.i) + body + errBtn + fb;
+  const fixBar = E.retry ? '<p class="fixbar" role="status"><b>' + t("fix_h") + "</b> " + t("fix_n", { n: E.left || 1 }) + "</p>" : steps(flow.length, E.i);
+  return top(E.retry ? t("fix_title") : t("ex_title")) + fixBar + body + errBtn + fb;
 };
 function exFinish(ex, ok, right) {
-  const E = app.st.ex; if (E.fb) return; E.fb = { ok, right: right || "" }; E.res[ex.id] = ok;
+  const E = app.st.ex; if (E.fb) return; E.fb = { ok, right: right || "" }; if (E.retry) { E.fix = E.fix || {}; E.fix[ex.id] = ok; E.tries = E.tries || {}; E.tries[ex.id] = (E.tries[ex.id] || 0) + 1; } else E.res[ex.id] = ok;
   log("exercise_answer", { item: ex.id, ok, kind: ex.type }); if (ex.type === "dictation") log("dictation_submit", { item: ex.id, ok });
   if (!ok) relatedWords(ex).forEach(id => { if (S.srs[id]) review(S.srs, id, false, today()); else addCard(S.srs, id, today()); });
-  saveSpot(E.i + 1); app.render(true);
+  saveSpot(E.retry ? C.lesson.flow.length : E.i + 1); app.render(true);
   if (app.say) app.say(ok ? t("fb_ok") : t("fb_bad") + (right ? " " + t("fb_soft") + right : ""));
 }
 const curEx = () => exById(C.lesson.flow[app.st.ex.i]);
@@ -160,7 +161,15 @@ ACT.exsay = e => audio.playText(e.dataset.v, e.dataset.id || null);
 ACT.exerr = () => { const ex = curEx(); app.st.rep = { kind: 1, sent: false, logs: false, text: t("ex_err_pre", { l: lid(), e: ex.id }) + " ", back: true }; log("exercise_report", { item: ex.id }); app.go("report"); };
 ACT.exref = () => { app.st.ex.shown = true; app.render(true); };
 ACT.exself = e => { const ex = curEx(); exFinish(ex, e.dataset.v === "1", ""); };
-ACT.exnext = () => { const E = app.st.ex, n = C.lesson.flow.length; if (E.i < n - 1) { const res = E.res; app.st.ex = Object.assign(newEx(E.i + 1), { res }); app.render(false); app.scrollTop(); } else { app.st.shadow = { i: 0, step: 0 }; app.go("shadow"); } };
+/* 0.3.8: задания с ошибкой повторяются в конце, пока ответ не верный (не больше 3 повторов на задание; оценка — по первой попытке) */
+const pendingFix = E => { const flow = C.lesson.flow; return flow.map((id, k) => k).filter(k => { const ex = exById(flow[k]); if (!ex || ex.type === "free") return false; const id = flow[k]; if (E.res[id] !== false) return false; if (E.fix && E.fix[id] === true) return false; return !(E.tries && E.tries[id] >= 3); }); };
+ACT.exnext = () => {
+  const E = app.st.ex, n = C.lesson.flow.length, keep = { res: E.res, retry: E.retry, fix: E.fix, tries: E.tries };
+  if (!E.retry && E.i < n - 1) { app.st.ex = Object.assign(newEx(E.i + 1), keep); app.render(false); app.scrollTop(); return; }
+  const p = pendingFix(E);
+  if (p.length) { const nx = p.find(k => k > E.i && E.retry) ?? p[0]; app.st.ex = Object.assign(newEx(nx), keep, { retry: true, left: p.length }); if (!E.retry) log("lesson_fix_start", { lesson: lid(), n: p.length }); app.render(false); app.scrollTop(); return; }
+  app.st.shadow = { i: 0, step: 0 }; app.go("shadow");
+};
 
 /* ---------- Shadowing: без записи голоса и без оценки произношения ---------- */
 R.shadow = () => {

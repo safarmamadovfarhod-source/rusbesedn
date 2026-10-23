@@ -344,3 +344,24 @@ a.btn{text-decoration:none}
 .nav button[data-go=grammar] span{font-size:min(13px,3.6vw);letter-spacing:-.01em}
 .large .mlbl{white-space:normal;max-width:min(10em,40vw);line-height:1.15}
 @media (max-height:480px) and (orientation:landscape){.map{aspect-ratio:auto;height:132px}}
+/* 0.3.8 */
+.gerr p.small{display:block}
+.seg button{display:flex;align-items:center;justify-content:center;font-size:1rem;line-height:1.2;text-align:center}
+.bubble{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.hero-img{display:block;margin:0 auto;width:180px;height:180px;object-fit:contain}
+.cupsm .hero-img,.goalrow.slim .hero-img{width:56px;height:56px}
+.ava{flex:none;width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--tint)}
+.sheet .ava{width:56px;height:56px}
+.brow{display:flex;gap:8px;align-items:flex-start;max-width:100%}.brow .bubble{max-width:calc(88% - 44px)}
+.expic{width:100%;height:180px;border-radius:18px;display:grid;place-items:center}.expic img{height:160px;width:auto;max-width:100%;object-fit:contain}
+.revword{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;min-height:96px;padding:10px;border:2px dashed var(--line);border-radius:var(--r-s);background:none;color:var(--ink);font:inherit;cursor:pointer}.revword span{font-size:2rem;font-weight:700}.revword small{font-size:.875rem;color:var(--muted)}
+.fixbar{margin:0 0 10px;padding:10px 14px;border-radius:var(--r-s);background:var(--warm);font-size:.95rem}
+/* 0.3.8: нижнее меню по макету автора */
+.nav button[aria-current=page] .pill{background:var(--tint)}
+.nav button[aria-current=page] svg{stroke:var(--primary)}
+.nav button[aria-current=page] svg .f{fill:var(--primary)}
+.nav button[aria-current=page]{color:var(--primary)}
+.nav svg text{font:700 10.5px "RS Sans","PT Sans",sans-serif;fill:currentColor;stroke:none}
+.nav button[aria-current=page] svg text{fill:#fff}
+.nav svg circle.d{fill:currentColor;stroke:none}
+.nav button[aria-current=page] .pill svg circle.d{fill:var(--primary)}

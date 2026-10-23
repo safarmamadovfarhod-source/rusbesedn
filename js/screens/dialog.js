@@ -5,6 +5,7 @@ import { C, setCurrent } from "../content.js";
 import { esc, permIdx, plain } from "../util.js";
 import { top, playIcon } from "../ui.js";
 import { log } from "../analytics.js";
+import { avatar } from "../pics.js";
 import * as audio from "../audio.js";
 const R = app.R, ACT = app.ACT;
 const sample = () => C.lesson.scenario.name_slot.sample;
@@ -16,7 +17,7 @@ const turns = () => C.lesson.scenario.turns;
 ACT.dlgstart = e => { if (e && e.dataset && e.dataset.v) setCurrent(e.dataset.v); const T = turns()[0]; app.st.dlg = { turn: 0, sel: null, done: false, hide: {}, hist: [{ ru: T.bot.ru, tg: T.bot.tg, me: false, aid: T.bot.audio_id }] }; app.go("dialog"); };
 R.dialog = () => {
   const d = app.st.dlg, T = turns()[d.turn]; let chat = '<div class="chat" aria-live="polite">';
-  d.hist.forEach(L => { chat += '<div class="bubble' + (L.me ? " me" : "") + '"><span lang="ru">' + esc(fill(L.ru)) + "</span>" + (showTg(L) ? '<span class="tr" lang="tg">' + esc(fillTg(L.tg)) + "</span>" : "") + '<button class="icon-btn" style="margin-top:4px" data-act="wsay" data-sp="' + (L.me ? "f" : "m") + '" data-v="' + esc(fill(L.ru)) + '" data-id="' + esc(L.aid || "") + '" aria-label="' + t("listen") + '">' + playIcon(14, "#14302E") + "</button></div>"; });
+  d.hist.forEach(L => { chat += (L.me ? "" : '<div class="brow">' + avatar("m") ) + '<div class="bubble' + (L.me ? " me" : "") + '"><span lang="ru">' + esc(fill(L.ru)) + "</span>" + (showTg(L) ? '<span class="tr" lang="tg">' + esc(fillTg(L.tg)) + "</span>" : "") + '<button class="icon-btn" style="margin-top:4px" data-act="wsay" data-sp="' + (L.me ? "f" : "m") + '" data-v="' + esc(fill(L.ru)) + '" data-id="' + esc(L.aid || "") + '" aria-label="' + t("listen") + '">' + playIcon(14, "var(--ink)") + "</button></div>" + (L.me ? "" : "</div>"); });
   chat += "</div>"; const h = top(esc(t("d_title_n", { n: ui(C.lesson.scenario.title) })));
   if (d.done) return h + chat + '<div class="card center"><h2>' + t("d_done") + '</h2><p class="sub">' + t("d_done_s") + '</p></div><button class="btn sec" data-act="dlgstart">' + t("d_again") + '</button><button class="btn" data-act="tohome">' + t("done") + "</button>";
   const hid = (d.hide || {})[d.turn] || [];

@@ -1,6 +1,7 @@
 import { t } from "./i18n.js";
 import { esc } from "./util.js";
 import { wavePath } from "./cup.js";
+import { S } from "./store.js";
 export const IC = {
   home: '<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></svg>',
   book: '<svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/></svg>',
@@ -15,7 +16,10 @@ export const IC = {
 export const playIcon = (sz, fill) => IC.play.replace("<svg", '<svg style="width:' + (sz || 18) + "px;height:" + (sz || 18) + "px;fill:" + (fill || "currentColor") + ';stroke:none"');
 let uid = 0;
 export function star(fill, stroke, sw) { return '<svg viewBox="0 0 36 36" aria-hidden="true"><polygon points="18,2 22,10 30,6 26,14 34,18 26,22 30,30 22,26 18,34 14,26 6,30 10,22 2,18 10,14 6,6 14,10" style="fill:' + fill + ";stroke:" + stroke + ";stroke-width:" + sw + '"/></svg>'; }
+/* 0.3.8: чаша — только в оформлении «Чаша»; в «Пути» — ученик, в «Ы-талисмане» — талисман */
 export function bowl(pct, label) {
+  const th = (S.settings && S.settings.theme) || "c";
+  if (th !== "c") return '<img class="hero-img" src="img/' + (th === "a" ? "learner" : "m01") + '.webp" alt="' + esc(label) + '">';
   const id = "bc" + (++uid), y = 116 - Math.round(Math.max(0, Math.min(100, pct)) / 100 * 58), ink = "var(--ink)", shape = "M14 38H186C186 90 152 116 100 116C48 116 14 90 14 38Z";
   return '<svg class="bowl" viewBox="0 0 200 128" role="img" aria-label="' + esc(label) + '"><defs><clipPath id="' + id + '"><path d="' + shape + '"/></clipPath></defs>' +
     '<g style="fill:none;stroke:var(--steam);stroke-width:4;stroke-linecap:round"><path d="M72 30C64 22 80 16 72 6"/><path d="M100 30C92 22 108 16 100 6"/><path d="M128 30C120 22 136 16 128 6"/></g>' +

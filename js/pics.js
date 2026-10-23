@@ -25,6 +25,8 @@ export const letterTile = w => {
   const ch = w && w.ru ? String(w.ru).replace(/\u0301/g, "").trim().charAt(0).toUpperCase() : "?";
   return '<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="14" fill="#fff" style="stroke:var(--primary)" stroke-width="3"/><text x="32" y="43" text-anchor="middle" font-size="30" font-weight="700" style="fill:var(--primary)" font-family="RS Sans, PT Sans, sans-serif">' + ch + "</text></svg>";
 };
+/* 0.3.8: портреты героев (f — Шарора, m — Манучехр) */
+export const avatar = (sp, size) => '<img class="ava" src="img/' + (sp === "f" ? "sharora" : "manuchehr") + '.webp" width="' + (size || 36) + '" height="' + (size || 36) + '" alt="" aria-hidden="true">';
 export function wordIcon(w) {
   const src = wordImgSrc(w);
   if (src) return '<img src="' + src + '" alt="" aria-hidden="true" style="width:100%;height:100%;object-fit:contain" decoding="async">';

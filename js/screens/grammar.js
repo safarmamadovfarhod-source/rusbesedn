@@ -81,7 +81,7 @@ R.gtopic = () => {
     return '<div class="card gq"><p style="margin:0 0 8px"><b>' + (qi + 1) + ". " + esc(ui(x.q)) + '</b></p><div style="display:grid;gap:8px">' + opts + "</div>" + fb + "</div>";
   }).join("");
   const answered = Object.keys(gq.ans).length, okN = tp.quiz.filter((x, i) => gq.ans[i] === x.a).length;
-  const res = answered === tp.quiz.length ? '<p class="center"><span class="badge g">' + t("g_res", { a: okN, b: tp.quiz.length }) + "</span></p>" : "";
+  const res = answered === tp.quiz.length ? '<p class="center"><span class="badge g">' + t("g_res", { a: gq.first != null ? gq.first : okN, b: tp.quiz.length }) + "</span></p>" + (okN < tp.quiz.length ? '<button class="btn sec" data-act="gfix">' + t("fix_title") + "</button>" : "") : "";
   const bl = fromLesson && ["exer", "lesson", "rules"].includes(ret.from) ? t("g_back_lesson") : t("g_back");
   const foot = fromLesson ? '<button class="btn" data-act="gret">' + bl + "</button>" : '<button class="btn sec" data-back>' + t("g_all") + "</button>";
   return top(t("g_title")) + "<h1 class=\"gh\">" + esc(ui(tp.title)) + "</h1>" +
@@ -96,10 +96,12 @@ ACT.gans = e => {
   const tp = topicById(app.st.gt); if (!tp) return;
   const gq = app.st.gq && app.st.gq.id === tp.id ? app.st.gq : (app.st.gq = { id: tp.id, ans: {} });
   const qi = +e.dataset.q; if (gq.ans[qi] != null) return; gq.ans[qi] = +e.dataset.v;
-  if (Object.keys(gq.ans).length === tp.quiz.length) {
+  if (Object.keys(gq.ans).length === tp.quiz.length && gq.first == null) {
     const okN = tp.quiz.filter((x, i) => gq.ans[i] === x.a).length, st = gstate(tp.id);
-    S.gram = S.gram || {}; S.gram[tp.id] = Object.assign({}, st, { seen: true, best: Math.max(st.best || 0, okN) }); save();
+    S.gram = S.gram || {}; S.gram[tp.id] = Object.assign({}, st, { seen: true, best: Math.max(st.best || 0, okN) }); save(); gq.first = okN;
     log("grammar_quiz", { topic: tp.id, ok: okN, n: tp.quiz.length });
   }
   app.render(true);
 };
+/* 0.3.8: «Исправляем ошибки» — неверно отвеченные вопросы открываются снова (оценка остаётся по первой попытке) */
+ACT.gfix = () => { const tp = topicById(app.st.gt), gq = app.st.gq; if (!tp || !gq) return; tp.quiz.forEach((x, i) => { if (gq.ans[i] !== x.a) delete gq.ans[i]; }); app.render(true); const q = document.querySelector(".gq button.choice:not([disabled])"); if (q) q.scrollIntoView({ block: "center" }); };

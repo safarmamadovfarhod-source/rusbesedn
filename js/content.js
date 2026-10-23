@@ -2,7 +2,7 @@ import { norm } from "./util.js";
 import { S } from "./store.js";
 /* Содержимое: курсы (пути a и b), уроки, диагностики. «Текущий урок» (C.lesson) переключается через setCurrent(id). */
 export const C = { grammar: null, glossary: null, courses: null, lessons: {}, diag: {}, cur: null, lesson: null, lessonMeta: null, timings: null, idx: { word: {}, grammar: {} } };
-const NAMES = ["анна", "руслан"];
+const NAMES = ["шарора", "манучехр"]; /* 0.3.8: герои — Шарора и Манучехр */
 async function getJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error("HTTP " + r.status + " " + url); return r.json(); }
 export async function loadAll() {
   C.courses = await getJSON("data/courses.json");
