@@ -17,7 +17,7 @@
      "path": "data/lessons/a0_01/lesson.json",
      "free": true,
      "audio": null,
-     "bytes": 50786,
+     "bytes": 51052,
      "topic": "intro",
      "sum": {
       "can": [
@@ -61,7 +61,7 @@
       ],
       "nw": 11
      },
-     "v": "cec510d5"
+     "v": "b0fc9fe0"
     },
     {
      "id": "a0_02",
@@ -73,7 +73,7 @@
      "free": true,
      "audio": null,
      "topic": "family",
-     "bytes": 37429,
+     "bytes": 37645,
      "sum": {
       "can": [
        {
@@ -113,7 +113,7 @@
       ],
       "nw": 13
      },
-     "v": "60d23e93"
+     "v": "3c3c3e26"
     },
     {
      "id": "a0_03",
@@ -125,7 +125,7 @@
      "free": true,
      "audio": null,
      "topic": "shop",
-     "bytes": 35813,
+     "bytes": 36047,
      "sum": {
       "can": [
        {
@@ -164,7 +164,7 @@
       ],
       "nw": 15
      },
-     "v": "2ab52b24"
+     "v": "501baece"
     },
     {
      "id": "a0_04",
@@ -176,7 +176,7 @@
      "free": true,
      "audio": null,
      "topic": "transport",
-     "bytes": 40771,
+     "bytes": 40843,
      "sum": {
       "can": [
        {
@@ -219,7 +219,7 @@
       ],
       "nw": 16
      },
-     "v": "991d9283"
+     "v": "67418427"
     },
     {
      "id": "a0_05",
@@ -231,7 +231,7 @@
      "free": true,
      "audio": null,
      "topic": "work",
-     "bytes": 38390,
+     "bytes": 38738,
      "sum": {
       "can": [
        {
@@ -272,7 +272,7 @@
       ],
       "nw": 14
      },
-     "v": "ed6165de"
+     "v": "71f3a7f5"
     }
    ],
    "track": "a"
@@ -293,7 +293,7 @@
      "path": "data/lessons/b_01/lesson.json",
      "free": true,
      "audio": null,
-     "bytes": 27163,
+     "bytes": 27331,
      "sum": {
       "can": [
        {
@@ -331,7 +331,7 @@
       ],
       "nw": 15
      },
-     "v": "8652c450"
+     "v": "1b0612b9"
     },
     {
      "id": "b_02",
@@ -342,7 +342,7 @@
      "path": "data/lessons/b_02/lesson.json",
      "free": true,
      "audio": null,
-     "bytes": 25550,
+     "bytes": 26075,
      "sum": {
       "can": [
        {
@@ -377,7 +377,7 @@
       ],
       "nw": 14
      },
-     "v": "2b6367ae"
+     "v": "cea8bacc"
     },
     {
      "id": "b_03",
@@ -388,7 +388,7 @@
      "path": "data/lessons/b_03/lesson.json",
      "free": true,
      "audio": null,
-     "bytes": 25540,
+     "bytes": 25608,
      "sum": {
       "can": [
        {
@@ -426,7 +426,7 @@
       ],
       "nw": 15
      },
-     "v": "82624604"
+     "v": "10edbaf1"
     }
    ]
   }
