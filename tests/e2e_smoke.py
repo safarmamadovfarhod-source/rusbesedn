@@ -7,6 +7,8 @@
     python3 -m http.server 8765 &
     python3 tests/e2e_smoke.py http://localhost:8765/
 Код выхода 0 — всё прошло; 1 — есть ошибки (список печатается)."""
+import json
+import pathlib
 import re
 import sys
 
@@ -53,8 +55,10 @@ with sync_playwright() as p:
     check("кнопка урока видна на первом экране 360×640", box and box["y"] + box["height"] <= 640, str(box))
 
     btn(page, "Начать").click(); wait(page, 500)
+    lesson_txt = page.inner_text("#view")
+    check("0.3.9: под уроком нет служебных пометок (Piper, черновик)", "Piper" not in lesson_txt and "черновик" not in lesson_txt, lesson_txt[-120:])
     btn(page, "К упражнениям").click(); wait(page)
-    page.locator("button.choice", has_text="Спаси́бо, Шарора́.").click(); wait(page)
+    page.locator("button.choice", has_text="Спаси́бо, Шаро́ра.").click(); wait(page)
     check("после ошибки подсвечен правильный ответ", page.locator("button.choice.good.right").count() == 1)
 
     # продолжение после перезагрузки (звонок, закрытие вкладки)
@@ -113,7 +117,7 @@ with sync_playwright() as p:
     page.locator("button.choice", has_text="Мне то́же").first.click(); wait(page)
     btn(page, "Дальше").click(); wait(page, 500)
     check("диалог: после ответа «ok» нужно выбрать подходящий", "подходит лучше" in page.inner_text("body"))
-    check("диалог: имя в таджикском переводе без ударения", "Номи ман Шарора́" not in page.inner_text("body"))
+    check("диалог: имя в таджикском переводе без ударения", "Номи ман Шаро́ра" not in page.inner_text("body"))
 
     # «Ещё» — меню разделов, «Звуки» и тренировка на слух (0.3.5)
     page.goto(URL); wait(page, 700)
@@ -158,7 +162,124 @@ with sync_playwright() as p:
     check("работает без интернета", "Ещё" in page.inner_text("body"))
     ctx.set_offline(False)
 
+    # 0.3.9: панель «Для проверки» выключена в сборке для людей
+    page.locator('nav [data-go="settings"]').click(); wait(page)
+    check("0.3.9: в «Ещё» нет раздела «Для проверки»", "Для проверки" not in page.inner_text("#view"))
     check("нет ошибок JavaScript", not errors, "; ".join(errors[:3]))
+
+    # 0.3.9: память телефона заполнена — человек видит сообщение на главной
+    ctx2 = browser.new_context(viewport={"width": 360, "height": 640}, is_mobile=True, has_touch=True)
+    p2 = ctx2.new_page(); onboard(p2, "Память")
+    p2.evaluate("() => { Storage.prototype.setItem = function () { throw new DOMException('quota', 'QuotaExceededError'); }; }")
+    btn(p2, "Начать").click(); wait(p2, 500)
+    btn(p2, "К упражнениям").click(); wait(p2)
+    p2.locator("button.choice").first.click(); wait(p2, 300)
+    p2.go_back(); wait(p2, 300); p2.go_back(); wait(p2, 500)
+    check("0.3.9: при заполненной памяти на главной есть предупреждение", p2.locator(".nostore").count() == 1, p2.inner_text("#view")[:80])
+    ctx2.close()
+
+    # 0.3.9: голос телефона молчит — подсказка появляется в самом уроке
+    ctx3 = browser.new_context(viewport={"width": 360, "height": 640}, is_mobile=True, has_touch=True)
+    ctx3.add_init_script("try { speechSynthesis.speak = function () {}; } catch (e) {}")
+    p3 = ctx3.new_page(); onboard(p3, "Звук")
+    btn(p3, "Начать").click(); wait(p3, 500)
+    p3.locator('[data-act="playline"]').first.click(); wait(p3, 3400)
+    check("0.3.9: если голос не заговорил, в уроке есть подсказка", p3.locator(".novoice").count() == 1)
+    btn(p3, "К упражнениям").click(); wait(p3)
+    ctx3.close()
+
+    # 0.3.10: уроки загружаются по требованию
+    ctx4 = browser.new_context(viewport={"width": 360, "height": 640}, is_mobile=True, has_touch=True)
+    p4 = ctx4.new_page(); reqs = []
+    p4.on("request", lambda r: reqs.append(r.url) if "/data/lessons/" in r.url else None)
+    onboard(p4, "Уроки")
+    boot = sorted(set(u.split("/data/lessons/")[1].split("/")[0] for u in reqs))
+    check("0.3.10: при запуске загружены только текущий урок и следующий (из 8)", boot in (["a0_01"], ["a0_01", "a0_02"]), str(boot))
+    check("0.3.10: в адресе урока есть версия", all("?v=" in u for u in reqs), str(reqs[:2]))
+    wait(p4, 1500)  # сервис-воркер успевает положить урок в кэш
+    ctx4.set_offline(True)
+    p4.reload(); wait(p4, 1200)
+    btn(p4, "Начать").click(); wait(p4, 600)
+    check("0.3.10: первый урок открывается без сети сразу после первой загрузки", "Меня зовут" in p4.inner_text("#view").replace("\u0301", ""), p4.inner_text("#view")[:100])
+    p4.go_back(); wait(p4, 400)
+    p4.locator('nav [data-go="settings"]').click(); wait(p4)
+    p4.locator('[data-go="setstudy"]').click(); wait(p4)
+    p4.locator('[data-act="settrack"][data-v="b"]').click(); wait(p4, 700)
+    check("0.3.10: без сети нескачанный урок даёт понятное сообщение", "ещё не скачан" in p4.inner_text("body"), p4.inner_text("body")[-120:])
+    p4.reload(); wait(p4, 1200)
+    check("0.3.10: приложение открывается без сети, даже если урок не скачан", p4.locator("#view .scr").count() == 1 and "Не получилось" not in p4.inner_text("body"), p4.inner_text("body")[:120])
+    ctx4.set_offline(False)
+    p4.reload(); wait(p4, 1500)
+    btn(p4, "Начать").click(); wait(p4, 800)
+    check("0.3.10: с сетью урок другого пути загружается и открывается", "Ты где" in p4.inner_text("#view").replace("\u0301", ""), p4.inner_text("#view")[:120])
+    wait(p4, 1200); ctx4.set_offline(True)
+    p4.reload(); wait(p4, 1200)
+    p4.get_by_role("button", name=re.compile("Начать|Продолжить")).first.click(); wait(p4, 800)
+    check("0.3.10: скачанный урок открывается без сети", "Ты где" in p4.inner_text("#view").replace("\u0301", ""), p4.inner_text("#view")[:120])
+    p4.locator('nav [data-go="words"]').click() if p4.locator('nav [data-go="words"]').count() else None
+    ctx4.close()
+
+    # 0.4.0: путь A — уроки 2–5 открываются и проходятся до конца, диалог каждого урока проходится
+    def run_lesson(pg):
+        for _ in range(400):
+            body = pg.inner_text("body")
+            if "Урок пройден" in body:
+                return True
+            for name in ["К упражнениям", "Дальше", "Проверить", "Получилось", "Я повторил(а)", "Совпало", "Показать образец"]:
+                loc = pg.get_by_role("button", name=name, exact=True)
+                if loc.count() and loc.first.is_enabled():
+                    if name == "Проверить":
+                        chips = pg.locator(".chips button.chip:not([disabled])")
+                        while chips.count():
+                            chips.first.click(); wait(pg, 40)
+                        if pg.locator("#typed").count():
+                            pg.fill("#typed", "хлеб")
+                    loc.first.click(); wait(pg, 150)
+                    break
+            else:
+                choices = pg.locator("button.choice")
+                if not choices.count():
+                    return False
+                choices.first.click(); wait(pg, 150)
+        return False
+
+    ctx5 = browser.new_context(viewport={"width": 360, "height": 640}, is_mobile=True, has_touch=True)
+    p5 = ctx5.new_page(); errs5 = []
+    p5.on("pageerror", lambda e: errs5.append(str(e)))
+    onboard(p5, "Курс")
+    titles = ["Знакомство", "Семья", "Магазин", "Транспорт", "Работа"]
+    done = []
+    for n, title in enumerate(titles):
+        p5.goto(URL); wait(p5, 700)
+        home_txt = p5.inner_text("#view")
+        if title not in home_txt:
+            break
+        p5.get_by_role("button", name=re.compile("^(Начать|Продолжить)")).first.click(); wait(p5, 700)
+        if not run_lesson(p5):
+            break
+        if n:  # диалог урока: выбираем варианты, пока не дойдём до конца
+            btn(p5, "Попробовать диалог").click(); wait(p5, 500)
+            lesson = json.loads((pathlib.Path(__file__).resolve().parent.parent / "data" / "lessons" / ("a0_0%d" % (n + 1)) / "lesson.json").read_text(encoding="utf-8"))
+            for turn in lesson["scenario"]["turns"]:
+                best = next(o["ru"] for o in turn["options"] if o["q"] == "best")
+                p5.locator("button.choice", has_text=best).first.click(); wait(p5, 250)
+                btn(p5, "Дальше").click(); wait(p5, 700)
+            if "Диалог пройден" not in p5.inner_text("body"):
+                break
+        done.append(title)
+    check("0.4.0: уроки 1–5 пути A и их диалоги проходятся до конца", done == titles, "пройдено: " + ", ".join(done) + " | " + p5.inner_text("body")[:160].replace("\n", " / "))
+    p5.goto(URL); wait(p5, 700)
+    check("0.4.0: после пяти уроков главная сообщает, что путь пройден", "Все уроки этого пути пройдены" in p5.inner_text("#view"), p5.inner_text("#view")[:120])
+    p5.locator('nav [data-go="words"]').click(); wait(p5, 900)
+    wtxt = p5.inner_text("#view").replace("\u0301", "")
+    check("0.4.0: во вкладке «Слова» есть слова новых уроков", all(x in wtxt for x in ["семья", "хлеб", "остановка", "водитель"]), wtxt[:160])
+    p5.locator('nav [data-go="talk"]').click(); wait(p5, 400)
+    ttxt = p5.inner_text("#view")
+    check("0.4.0: во вкладке «Диалоги» пять диалогов и нет заглушек «Скоро»", all(x in ttxt for x in ["Моя семья", "В магазине", "На улице", "О работе"]) and "Скоро" not in ttxt, ttxt[:200])
+    p5.locator('nav [data-go="grammar"]').click(); wait(p5, 400)
+    check("0.4.0: вкладка «Грамматика» открывается без ошибок", p5.locator("#view .scr").count() == 1)
+    check("0.4.0: нет ошибок JavaScript в уроках 2–5", not errs5, "; ".join(errs5[:3]))
+    ctx5.close()
     browser.close()
 
 failed = [r for r in results if not r[0]]

@@ -74,9 +74,9 @@ R.setdev = () => {
   return top(t("dev_h")) + '<p class="small">' + t("dev_note") + '</p><ul class="small">' + cl + '</ul><p class="small">' + t("ver") + ": " + CONFIG.APP_VERSION + '</p><div class="chips">' + dev + "</div>";
 };
 ACT.setvoice = e => { S.settings.voice = e.dataset.v; save(); app.render(true); audio.playText("Здра́вствуйте", null); };
-ACT.settrack = e => {
+ACT.settrack = async e => {
   const v = e.dataset.v; if (S.settings.track === v) return;
-  S.settings.track = v; S.settings.hintLang = v === "a" ? "tg" : "ru"; save(); setCurrent(nextLessonId(v) || firstLessonId()); log("path_set", { path: v }); app.render(true);
+  S.settings.track = v; S.settings.hintLang = v === "a" ? "tg" : "ru"; save(); await app.useLesson(nextLessonId(v) || firstLessonId()); log("path_set", { path: v }); app.render(true);
 };
 ACT.sethint = e => { S.settings.hintLang = e.dataset.v; save(); app.render(true); };
 ACT.setsize = e => { S.settings.large = e.dataset.v === "1"; save(); app.render(true); };
@@ -96,7 +96,7 @@ ACT.dev = e => { const id = e.dataset.v; app.st.diag = { set: id === "diagb" ? "
 /* ---------- Сообщить о проблеме (D-26, D-32) ---------- */
 R.report = () => {
   const r = app.st.rep || (app.st.rep = { kind: null, sent: false, logs: false, text: "" });
-  if (r.sent) return top(t("rep_title")) + '<div class="card center"><h2>' + (CONFIG.REPORT_TO ? t("rep_thanks") : t("rep_copied")) + '</h2></div><p class="small">' + t("rep_after") + '</p><textarea readonly id="repout" aria-label="' + t("rep_title") + '">' + esc(r.out || "") + '</textarea>' + (r.back ? '<button class="btn" data-act="repback">' + t("done") + "</button>" : '<button class="btn" data-go="settings">' + t("done") + "</button>");
+  if (r.sent) return top(t("rep_title")) + '<div class="card center"><h2>' + (CONFIG.REPORT_TO ? t("rep_thanks") : t("rep_copied")) + '</h2></div>' + tgBtn() + '<p class="small">' + t("rep_after") + '</p><textarea readonly id="repout" aria-label="' + t("rep_title") + '">' + esc(r.out || "") + '</textarea>' + (r.back ? '<button class="btn" data-act="repback">' + t("done") + "</button>" : '<button class="btn" data-go="settings">' + t("done") + "</button>");
   const ks = ["rk1", "rk2", "rk3", "rk4"].map((k, i) => '<button class="choice" data-act="rk" data-v="' + i + '" aria-pressed="' + (r.kind === i) + '">' + t(k) + "</button>").join("");
   return top(t("rep_title")) + "<h3>" + t("rep_kind") + '</h3><div style="display:grid;gap:8px">' + ks + '</div><textarea id="reptext" placeholder="' + t("rep_ph") + '" aria-label="' + t("rep_ph") + '">' + esc(r.text) + '</textarea><button class="choice" data-act="replog" aria-pressed="' + r.logs + '">' + t("rep_logs") + '</button><p class="small">' + t("rep_auto") + '</p><p class="small">' + t("rep_info") + '</p><div class="grow"></div><button class="btn" data-act="repsend"' + (r.kind === null ? ' disabled aria-describedby="repneed"' : "") + ">" + (CONFIG.REPORT_TO ? t("send") : t("rep_copy")) + "</button>" + (r.kind === null ? '<p class="small center" id="repneed" style="margin:6px 0 0">' + t("rep_need") + "</p>" : "");
 };
@@ -116,11 +116,13 @@ ACT.repsend = async () => {
 
 /* ---------- О приложении (D-56) и политика конфиденциальности ---------- */
 const hdrBack = title => '<div class="hdr"><div class="hrow"><button class="icon-btn" data-back aria-label="' + esc(t("back")) + '">' + IC.back + '</button><h1 class="grow">' + title + "</h1></div></div>";
+/* 0.3.9: поддержка в Telegram — у многих на телефоне не настроена почта */
+const tgBtn = () => CONFIG.SUPPORT_TG ? '<a class="btn sec" style="margin-top:12px" target="_blank" rel="noopener" href="' + esc(CONFIG.SUPPORT_TG) + '">' + t("ab_tg") + "</a>" : "";
 R.about = () => {
   const mail = "mailto:" + CONFIG.REPORT_TO + "?subject=" + encodeURIComponent(t("app"));
   return hdrBack(t("n_about")) +
     '<div class="card3 hrow"><div class="mcirc sm">' + mascotImg("hi", 74, "") + '</div><div><h2>' + t("app") + '</h2><p class="small">' + t("ab_ver", { v: CONFIG.APP_VERSION }) + "</p></div></div>" +
-    '<div class="card3"><div class="lbl-up">' + t("ab_author") + '</div><h2 style="margin-top:6px">' + esc(t("ab_name")) + '</h2><p class="small">' + t("ab_role") + '</p>' + (CONFIG.REPORT_TO ? '<a class="btn sec" style="margin-top:12px" href="' + esc(mail) + '">' + t("ab_write") + "</a>" : "") + "</div>" +
+    '<div class="card3"><div class="lbl-up">' + t("ab_author") + '</div><h2 style="margin-top:6px">' + esc(t("ab_name")) + '</h2><p class="small">' + t("ab_role") + '</p>' + (CONFIG.REPORT_TO ? '<a class="btn sec" style="margin-top:12px" href="' + esc(mail) + '">' + t("ab_write") + "</a>" : "") + tgBtn() + "</div>" +
     '<div class="card3"><div class="lbl-up">' + t("ab_data_h") + '</div><p style="margin-top:6px">' + t("ab_data") + '</p><button class="arow" data-go="privacy" style="margin-top:10px"><span>' + t("ab_privacy") + "</span>" + IC.back.replace("M15 5l-7 7 7 7", "M9 5l7 7-7 7") + "</button></div>" +
     '<div class="card3"><div class="lbl-up">' + t("ab_thanks_h") + '</div><p style="margin-top:6px">' + t("ab_font") + "<br>" + t("ab_voice") + "</p></div>";
 };

@@ -52,7 +52,7 @@ def main(path):
     for f in L["flow"]:
         if f not in exids: e("flow: нет упражнения " + f)
     st = ex.get("skip_test", [])
-    if not B and len(st) != 8: w("в тесте на пропуск %d вопросов (ожидалось 8)" % len(st))
+    if not B and st and len(st) != 8: w("в тесте на пропуск %d вопросов (ожидалось 8)" % len(st))
     for q in st:
         if q["type"] == "choice" and not (0 <= q["answer"] < len(q["options"])): e("skip %s: ответ вне вариантов" % q["id"])
     for s in L["shadowing"]["items"]:

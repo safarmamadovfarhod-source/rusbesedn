@@ -10,6 +10,9 @@ const DEFAULT = () => ({
   lastOpen: null, backShownOn: null
 });
 let mem = null, storageOk = true;
+/* 0.3.9: первая неудача сохранения (память заполнена, запрет браузера) → сообщение человеку (задаёт main.js) */
+export const hooks = { fail: null };
+function failed() { const was = storageOk; storageOk = false; if (was && hooks.fail) { try { hooks.fail(); } catch (e) { } } }
 export const S = DEFAULT();
 export const now = () => (typeof window !== "undefined" && window.__now) ? window.__now() : Date.now();
 export const today = () => dateStr(now());
@@ -18,13 +21,13 @@ const BAD_KEYS = ["__proto__", "constructor", "prototype"];
 function merge(dst, src) { for (const k in src) { if (BAD_KEYS.includes(k) || !Object.prototype.hasOwnProperty.call(src, k)) continue; if (src[k] && typeof src[k] === "object" && !Array.isArray(src[k]) && dst[k] && typeof dst[k] === "object" && !Array.isArray(dst[k])) merge(dst[k], src[k]); else dst[k] = src[k]; } return dst; }
 export function load() {
   let raw = null;
-  try { raw = localStorage.getItem(KEY); } catch (e) { storageOk = false; raw = mem; }
+  try { raw = localStorage.getItem(KEY); } catch (e) { failed(); raw = mem; }
   if (raw) { try { const o = JSON.parse(raw); if (o && o.v === 1) merge(S, o); } catch (e) { /* повреждённые данные: начинаем заново */ } }
   return S;
 }
 export function save() {
   const s = JSON.stringify(S);
-  try { localStorage.setItem(KEY, s); storageOk = true; } catch (e) { storageOk = false; mem = s; }
+  try { localStorage.setItem(KEY, s); storageOk = true; } catch (e) { mem = s; failed(); }
 }
 export const isPersistent = () => storageOk;
 export function reset() { const d = DEFAULT(); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, d); save(); }

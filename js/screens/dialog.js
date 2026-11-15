@@ -14,7 +14,7 @@ const fill = s => String(s == null ? "" : s).split("{имя}").join(sample());
 const fillTg = s => String(s == null ? "" : s).split("{имя}").join(plain(sample()));
 const showTg = o => S.settings.hintLang === "tg" && o && o.tg;
 const turns = () => C.lesson.scenario.turns;
-ACT.dlgstart = e => { if (e && e.dataset && e.dataset.v) setCurrent(e.dataset.v); const T = turns()[0]; app.st.dlg = { turn: 0, sel: null, done: false, hide: {}, hist: [{ ru: T.bot.ru, tg: T.bot.tg, me: false, aid: T.bot.audio_id }] }; app.go("dialog"); };
+ACT.dlgstart = async e => { if (e && e.dataset && e.dataset.v && !(await app.useLesson(e.dataset.v))) return; const T = turns()[0]; app.st.dlg = { turn: 0, sel: null, done: false, hide: {}, hist: [{ ru: T.bot.ru, tg: T.bot.tg, me: false, aid: T.bot.audio_id }] }; app.go("dialog"); };
 R.dialog = () => {
   const d = app.st.dlg, T = turns()[d.turn]; let chat = '<div class="chat" aria-live="polite">';
   d.hist.forEach(L => { chat += (L.me ? "" : '<div class="brow">' + avatar("m") ) + '<div class="bubble' + (L.me ? " me" : "") + '"><span lang="ru">' + esc(fill(L.ru)) + "</span>" + (showTg(L) ? '<span class="tr" lang="tg">' + esc(fillTg(L.tg)) + "</span>" : "") + '<button class="icon-btn" style="margin-top:4px" data-act="wsay" data-sp="' + (L.me ? "f" : "m") + '" data-v="' + esc(fill(L.ru)) + '" data-id="' + esc(L.aid || "") + '" aria-label="' + t("listen") + '">' + playIcon(14, "var(--ink)") + "</button></div>" + (L.me ? "" : "</div>"); });

@@ -74,12 +74,12 @@ R.ready = () => bandless() + '<div class="grow"></div><h1>' + t("ob_done") + '</
 const bandless = () => steps(6, 5);
 ACT.obnext = () => { keepName(); const nx = { path: "level", level: "theme", theme: "goal", goal: "ready" }[app.cur]; if (nx) app.go(nx); };
 ACT.obagain = () => { app.stack = []; S.settings.uiLang = null; S.settings.level = null; app.st.ob = {}; save(); app.go("lang", { noPush: true }); };
-ACT.obstart = () => {
+ACT.obstart = async () => {
   const a = S.settings.track === "a", lv = S.settings.level;
   log("onboarding_choice", { path: S.settings.track, level: lv, theme: S.settings.theme, min: S.settings.dailyMin });
   if (a && lv === "diag") { app.st.diag = freshDiag("a"); app.go("diag"); return; }
   if (!a && lv === "check") { app.st.diag = freshDiag("b"); app.go("diag"); return; }
-  S.diag = null; S.order[S.settings.track] = []; S.onboarded = true; save(); setCurrent(nextLessonId() || firstLessonId());
+  S.diag = null; S.order[S.settings.track] = []; S.onboarded = true; save(); await app.useLesson(nextLessonId() || firstLessonId());
   log("onboarding_complete", { mode: a ? "zero" : lv, level: 0 }); app.stack = []; app.go("home", { noPush: true });
 };
 ACT.startdiagb = () => { app.st.diag = freshDiag("b"); app.go("diag"); };
@@ -132,17 +132,17 @@ ACT.dskip = () => { diagFinish(); };
 ACT.dquit = () => { const d = app.st.diag; d.n = 0; d.tp = {}; diagFinish(); };
 ACT.dsay = e => playText(e.dataset.v, e.dataset.id || null);
 ACT.dnext = () => { const d = app.st.diag; if (d.i < dset().questions.length - 1) { app.st.diag = { set: d.set, i: d.i + 1, score: d.score, n: d.n, tp: d.tp, fb: null, sel: null, built: [], typed: "" }; app.render(false); app.scrollTop(); } else diagFinish(); };
-function diagFinish() {
+async function diagFinish() {
   const d = app.st.diag;
   if (d.set === "b") {
     const db = C.diag.b, base = trackLessons("b").map(l => l.id);
     if (d.n > 0) { S.diagB = {}; db.topics.forEach(tp => { S.diagB[tp.id] = d.tp[tp.id] || 0; }); S.diagB.ts = today(); }
     const ord = db.topics.slice().sort((x, y) => (d.n > 0 ? (d.tp[x.id] || 0) - (d.tp[y.id] || 0) : 0) || base.indexOf(x.lesson) - base.indexOf(y.lesson)).map(tp => tp.lesson);
-    S.order.b = ord; S.onboarded = true; save(); setCurrent(nextLessonId("b") || firstLessonId());
+    S.order.b = ord; S.onboarded = true; save(); await app.useLesson(nextLessonId("b") || firstLessonId());
     log("onboarding_complete", { mode: "check", n: d.n }); app.stack = []; app.go(d.n > 0 ? "resultb" : "home", { noPush: true }); return;
   }
   const level = diagLevel(d.score, d.n, C.diag.a.levels);
-  S.diag = { score: d.score, n: d.n, level, ts: today() }; S.onboarded = true; save(); setCurrent(nextLessonId("a") || firstLessonId());
+  S.diag = { score: d.score, n: d.n, level, ts: today() }; S.onboarded = true; save(); await app.useLesson(nextLessonId("a") || firstLessonId());
   log("onboarding_complete", { mode: "diag", level, score: d.score, n: d.n }); app.go("result");
 }
 
@@ -167,7 +167,7 @@ function skipQ(k) { /* приводим к общему виду вопроса 
   q.q = { ru: k.q_ru || (k.type === "builder" ? "Составьте фразу" : "Послушайте и напишите слово"), tg: k.q_tg || (k.type === "builder" ? "Ҷумларо созед" : "Гӯш кунед ва калимаро нависед") };
   return q;
 }
-ACT.skipstart = () => { setCurrent(nextLessonId("a") || firstLessonId()); app.st.skip = { i: 0, score: 0, fb: null, sel: null, built: [], done: false }; app.go("skiptest"); };
+ACT.skipstart = async () => { if (!(await app.useLesson(nextLessonId("a") || firstLessonId()))) return; app.st.skip = { i: 0, score: 0, fb: null, sel: null, built: [], done: false }; app.go("skiptest"); };
 R.skiptest = () => {
   const s = app.st.skip, ks = C.lesson.exercises.skip_test;
   if (s.done) { const pass = s.score >= 7; return band() + "<h1>" + t("skip_title") + '</h1><div class="card center"><h2>' + s.score + " / " + ks.length + "</h2><p>" + (pass ? t("skip_pass") : t("skip_fail")) + '</p></div><div class="grow"></div>' + (pass ? "" : '<button class="btn warm" data-act="skiptolesson">' + t("to_lesson") + "</button>") + '<button class="btn' + (pass ? "" : " sec") + '" data-act="tohome">' + t("to_home") + "</button>"; }

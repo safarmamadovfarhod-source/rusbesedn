@@ -4,7 +4,7 @@
 Запуск из папки app:  python3 tools/build_manifest.py"""
 import hashlib, json, pathlib, sys
 R = pathlib.Path(__file__).resolve().parent.parent
-SKIP_DIRS = {"tests", "tools", "node_modules", ".git"}
+SKIP_DIRS = {"tests", "tools", "node_modules", ".git", "docs", "audit-experiments"}
 SKIP_FILES = {"sw.template.js", "README.md", "sw.js"}
 def files():
     out = []
@@ -28,13 +28,24 @@ for c in courses["courses"]:
         if ext:
             sets = {v + "_" + t: str(base / (l["id"] + "_timings_" + v + "_" + t + ".json")) for v in "fm" for t in "ns" if (adir / (l["id"] + "_timings_" + v + "_" + t + ".json")).exists()}
             l["audio"] = {"base": str(base), "ext": ext, "sets": sets}
-        l["bytes"] = sum(p.stat().st_size for p in (R / pathlib.Path(l["path"]).parent).rglob("*") if p.is_file())
+        ldir = R / pathlib.Path(l["path"]).parent
+        l["bytes"] = sum(p.stat().st_size for p in ldir.rglob("*") if p.is_file())
+        # 0.3.10: уроки грузятся по требованию. В courses.json — краткая сводка урока (без загрузки самого урока)
+        # и «версия» v (хэш файлов урока): она стоит в адресе файла, поэтому изменённый урок скачивается заново, а неизменённый — нет.
+        d = json.loads((R / l["path"]).read_text(encoding="utf-8"))
+        words = [w for w in d.get("words", []) if w.get("type") != "service"]
+        l["sum"] = {"can": [{k: c[k] for k in ("ru", "tg") if k in c} for c in d.get("passport", {}).get("can_do", [])],
+                    "scenario": d.get("scenario", {}).get("title", {}), "words": [w["id"] for w in d.get("words", [])], "nw": len(words)}
+        hv = hashlib.sha1()
+        for fp in sorted(x for x in ldir.rglob("*") if x.is_file()): hv.update(fp.relative_to(R).as_posix().encode()); hv.update(fp.read_bytes())
+        l["v"] = hv.hexdigest()[:8]
 cj.write_text(json.dumps(courses, ensure_ascii=False, indent=1), encoding="utf-8")
 # 2) sw.js
 fl = files(); h = hashlib.sha1()
 for p in fl: h.update(p.relative_to(R).as_posix().encode()); h.update(p.read_bytes())
 version = h.hexdigest()[:10]
-pre = ["./"] + [p.relative_to(R).as_posix() for p in fl]
+# 0.3.10: в предварительный кэш идёт только оболочка; уроки и их озвучку сервис-воркер кладёт в отдельный кэш при первом обращении
+pre = ["./"] + [p.relative_to(R).as_posix() for p in fl if "lessons" not in p.relative_to(R).parts]
 tpl = (R / "sw.template.js").read_text(encoding="utf-8")
 (R / "sw.js").write_text(tpl.replace("/*VERSION*/", version).replace("/*PRECACHE*/[]", json.dumps(pre, ensure_ascii=False, indent=1)), encoding="utf-8")
 total = sum(p.stat().st_size for p in fl)

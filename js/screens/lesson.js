@@ -9,6 +9,7 @@ import { band, top, steps, bowl, fbCard, playIcon, IC } from "../ui.js";
 import { PICS, wordIcon, avatar, wordImgSrc } from "../pics.js";
 import { log } from "../analytics.js";
 import * as audio from "../audio.js";
+import { CONFIG } from "../config.js";
 import { addCard, review } from "../srs.js";
 import { xpForLesson } from "../progress.js";
 
@@ -27,10 +28,11 @@ R.lesson = () => {
     h += '<div class="line">' + avatar(l.s) + '<div class="words"><span lang="ru">' + ws + '</span>' + (S.showTr !== false && hasTr() && l.tg ? '<span class="tr" lang="tg">' + esc(l.tg) + "</span>" : "") + '</div><button class="play" data-act="playline" data-v="' + i + '" aria-label="' + t("listen") + '">' + IC.play + "</button></div>";
   });
   /* 0.3.7: «К упражнениям» всегда видна — закреплённая панель внизу (аудит 1.3) */
-  h += '</div><p class="small" id="vnote">' + voiceNote() + '</p><div class="dock">' + (L.rules ? '<button class="btn sec" data-go="rules">' + t("to_rules") + "</button>" : "") + '<button class="btn" data-act="exstart">' + t("to_ex") + "</button></div>";
+  h += '</div>' + (voiceNote() ? '<p class="small" id="vnote">' + voiceNote() + "</p>" : "") + '<div class="dock">' + (L.rules ? '<button class="btn sec" data-go="rules">' + t("to_rules") + "</button>" : "") + '<button class="btn" data-act="exstart">' + t("to_ex") + "</button></div>";
   return h;
 };
-const voiceNote = () => (C.lessonMeta.audio ? "" : t("demo_note") + ". ") + (hasTr() ? t("tg_note") : "");
+/* 0.3.9: служебные пометки («демо-голос», «черновик перевода») видит только разработчик (DEV_PANEL) */
+const voiceNote = () => CONFIG.DEV_PANEL ? (C.lessonMeta.audio ? "" : t("demo_note") + ". ") + (hasTr() ? t("tg_note") : "") : "";
 function highlight(lineIdx, wi) {
   document.querySelectorAll(".w.hot").forEach(e => e.classList.remove("hot"));
   if (wi < 0) return; const el = document.querySelector('.w[data-l="' + lineIdx + '"][data-i="' + wi + '"]'); if (el) el.classList.add("hot");
@@ -63,7 +65,7 @@ export function sheetHtml() {
   const sh = app.st.sheet; if (!sh) return "";
   if (sh.term) return termSheet(sh);
   const n = sh.w, w = findWord(n), g = findGrammar(n, sh.l), name = isName(n);
-  const title = w ? w.ru : (name ? (n === "шарора" ? "Шарора́" : "Мануче́хр") : (sh.txt || n));
+  const title = w ? w.ru : (name ? (n === "шарора" ? "Шаро́ра" : "Мануче́хр") : (sh.txt || n));
   const added = !!S.srs[w ? w.id : ""];
   const tabs = '<div class="seg" role="tablist"><button role="tab" data-act="sheettab" data-v="word" aria-pressed="' + (sh.tab === "word") + '">' + t("tab_word") + '</button><button role="tab" data-act="sheettab" data-v="why" aria-pressed="' + (sh.tab === "why") + '">' + t("tab_why") + "</button></div>";
   let body;
@@ -86,7 +88,7 @@ ACT.wadd = e => { addCard(S.srs, e.dataset.v, today()); save(); app.render(true)
 /* ---------- упражнения по lesson.flow ---------- */
 /* класс варианта: выбранный — good/soft; после ошибки правильный вариант тоже подсвечивается зелёным */
 /* образец «Меня зовут …» с именем человека, если он его указал (0.3.4, аудит М6) */
-const refFor = r => { const nm = (S.settings.name || "").trim(); return nm ? String(r).replace("Шарора́", nm) : r; };
+const refFor = r => { const nm = (S.settings.name || "").trim(); return nm ? String(r).replace("Шаро́ра", nm) : r; };
 const lowFirst = x => { const s = String(x || ""); return s.charAt(0).toLowerCase() + s.slice(1); };
 const optCls = (E, v, isRight) => E.sel === v ? (E.fb && E.fb.ok ? " good" : " soft") : (E.fb && isRight ? " good right" : "");
 const newEx = i => ({ i, fb: null, sel: null, built: [], lb: [], typed: "", shown: false });
@@ -98,7 +100,7 @@ ACT.exstart = () => {
   if (r && r.i > 0) { app.st.ex = Object.assign(newEx(Math.min(r.i, n - 1)), { res: r.res || {} }); log("lesson_resume", { lesson: lid(), item: String(r.i) }); if (r.i >= n) { app.st.shadow = { i: 0, step: 0 }; app.go("shadow"); return; } app.go("exer"); return; }
   app.st.ex = Object.assign(newEx(0), { res: {} }); log("lesson_start", { lesson: lid() }); app.go("exer");
 };
-ACT.resume = e => { setCurrent(e.dataset.v); app.st.lessonStart = now(); ACT.exstart(); };
+ACT.resume = async e => { if (!(await app.useLesson(e.dataset.v))) return; app.st.lessonStart = now(); ACT.exstart(); app.warmDone(); };
 const relatedWords = ex => {
   const src = ex.type === "builder" ? ex.answer : ex.type === "choice" ? ex.options[ex.answer] : ex.type === "dictation" ? ex.answer : ex.type === "pictures" ? "" : "";
   const ids = new Set(); plain(src).split(/\s+/).forEach(x => { const w = findWord(norm(x)); if (w) ids.add(w.id); }); if (ex.type === "pictures" || ex.type === "meaning") ids.add(ex.word); return [...ids];
@@ -205,6 +207,6 @@ export function completeLesson() {
 }
 R.summary = () => {
   const r = completeLesson(), q = ["fb1", "fb2", "fb3", "fb4"].map((k, i) => '<button class="chip" data-act="fb" data-v="' + i + '" aria-pressed="' + (r.rating === i) + '">' + t(k) + "</button>").join("");
-  return band() + '<div class="center"><h1>' + t("sum_title") + "</h1>" + bowl(63, t("sum_title")) + '<p style="margin-top:6px"><b>' + t("xp_n", { n: r.xp }) + "</b> · " + t("sum_correct", { a: r.score, b: r.total }) + "</p></div><h3>" + t("sum_q") + '</h3><div class="chips">' + q + "</div>" + (r.rating != null ? '<p class="sub">' + t("fb_thanks") + "</p>" : "") + '<div class="grow"></div><button class="btn warm" data-act="dlgstart" data-v="' + lid() + '">' + t("try_dialog") + "</button>" + (nextLessonId() ? '<button class="btn" data-act="startlesson" data-v="' + nextLessonId() + '">' + t("next_lesson") + '</button><button class="btn sec" data-act="tohome">' + t("to_home") + "</button>" : '<button class="btn" data-act="tohome">' + t("to_home") + "</button>");
+  return band() + '<div class="center"><h1>' + t("sum_title") + "</h1>" + bowl(63, t("sum_title")) + '<p style="margin-top:6px"><b>' + t("xp_n", { n: r.xp }) + "</b> · " + t("sum_correct", { a: r.score, b: r.total }) + "</p></div><h3>" + t("sum_q") + '</h3><div class="chips">' + q + "</div>" + (r.rating != null ? '<p class="sub" role="status">' + t("fb_thanks") + "</p>" : "") + '<div class="grow"></div><button class="btn warm" data-act="dlgstart" data-v="' + lid() + '">' + t("try_dialog") + "</button>" + (nextLessonId() ? '<button class="btn" data-act="startlesson" data-v="' + nextLessonId() + '">' + t("next_lesson") + '</button><button class="btn sec" data-act="tohome">' + t("to_home") + "</button>" : '<button class="btn" data-act="tohome">' + t("to_home") + "</button>");
 };
 ACT.fb = e => { const r = S.progress.lessons[lid()]; r.rating = +e.dataset.v; log("lesson_rating", { lesson: lid(), rate: r.rating }); save(); app.render(true); };

@@ -1,8 +1,8 @@
 import { app } from "../app.js";
-import { S, save, today, now } from "../store.js";
+import { S, save, today, now, isPersistent } from "../store.js";
 import { t, ui, hint } from "../i18n.js";
 import { permissionPending } from "../cup.js";
-import { C, wordById, setCurrent, track, orderedLessons, nextLessonId, lessonDoneId, courseOf, trackLessons, lessonOfTopic } from "../content.js";
+import { C, wordById, setCurrent, track, orderedLessons, nextLessonId, lessonDoneId, courseOf, trackLessons, lessonOfTopic, sumOf, isLoaded, ensureLessons, ensureWords } from "../content.js";
 import { esc, diffDays, plain, norm, addDays, weekStart } from "../util.js";
 import { band, top, steps, bowl, star, IC, playIcon } from "../ui.js";
 import { computeStreak, weekMinutes, weekGoal } from "../progress.js";
@@ -19,7 +19,7 @@ const goBtn = (nid, cls, style) => { const r = resumeOf(nid); return r && r.i > 
 const doneCount = () => trackLessons(track()).filter(l => lessonDoneId(l.id)).length;
 const lessonNo = id => orderedLessons(track()).findIndex(l => l.id === id) + 1;
 
-app.startLesson = id => { if (id) setCurrent(id); app.st.lessonStart = now(); app.st.ex = null; app.go("lesson"); };
+app.startLesson = async id => { if (id && !(await app.useLesson(id))) return; app.st.lessonStart = now(); app.st.ex = null; app.go("lesson"); app.warmDone(); };
 ACT.startlesson = e => app.startLesson(e && e.dataset ? e.dataset.v : null);
 ACT.tohome = () => { app.stack = []; app.go("home", { noPush: true }); };
 
@@ -79,7 +79,7 @@ R.home = () => {
   const stations = all.map(l => { const d = lessonDoneId(l.id); return '<div class="st">' + (d ? star("var(--primary)", "var(--ink)", 1.5) : star("var(--surface)", "var(--primary)", 2)) + "<span>" + esc(ui(l.title)) + "</span></div>"; }).join("");
   let card;
   if (nid) {
-    const L = C.lessons[nid], meta = L.meta, can = ui(L.data.passport.can_do[0]);
+    const L = C.lessons[nid], meta = L.meta, can = ui(sumOf(nid).can[0] || {});
     card = '<div class="card" style="display:grid;grid-template-columns:44px 1fr;gap:12px"><div style="width:44px;height:44px;color:var(--primary)">' + star("var(--primary)", "var(--ink)", 1.5) + '</div><div><small class="small">' + t("lesson_n", { n: lessonNo(nid) }) + "</small><h3>" + esc(ui(meta.title)) + '</h3><p class="sub">' + esc(can) + '</p></div>' + goBtn(nid, "btn warm", ' style="grid-column:1/-1"') + "" +
       (tr === "a" && nid === "a0_01" ? '<button class="btn ghost" style="grid-column:1/-1;font-weight:400" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
   } else {
@@ -92,7 +92,9 @@ R.home = () => {
   const tiltBtn = (S.settings.theme || "c") === "c" && permissionPending() && !S.tiltAsked ? '<div class="card tiltcard"><b>' + t("tilt_ask") + '</b><p class="small" style="margin:0">' + t("tilt_note") + '</p><div class="row"><button class="btn sec" data-act="tiltask">' + t("tilt_yes") + '</button><button class="btn ghost" data-act="tiltlater">' + t("tilt_later") + "</button></div></div>" : "";
   /* напоминание о резервной копии: если браузер не обещал хранить данные постоянно (0.3.4) */
   const backup = (S.persist === false && doneCount() > 0 && (!S.exportTs || diffDays(td, S.exportTs) >= 14)) ? '<div class="card" role="note"><b>' + t("backup_h") + '</b><p class="small">' + t("backup_s") + '</p><button class="btn sec" data-act="export">' + t("export") + "</button></div>" : "";
-  const tail = revBtn + strengthsCard() + backup + progressCard(), pre = off + iosCard();
+  /* 0.3.9: телефон не дал сохранить прогресс (память заполнена и т. п.) — говорим сразу и на главной */
+  const nostore = isPersistent() ? "" : '<div class="card nostore" role="alert" style="background:var(--warm)"><b>' + t("store_bad") + '</b><p class="small" style="margin:0">' + t("store_fix") + "</p></div>";
+  const tail = revBtn + strengthsCard() + backup + progressCard(), pre = nostore + off + iosCard();
   const nm0 = (S.settings.name || "").trim(), head = '<div class="top" style="margin-top:-2px"><h1 class="grow">' + esc(nm0 ? t("hello_name", { name: nm0 }) : t("hello")) + "</h1></div>";
   if (th === "a") { /* «Путь» (0.3.6): цель недели, карта пути (как в эскизе), карточка урока */
     const nm1 = (S.settings.name || "").trim(), headA = '<div class="hrow2"><h1>' + esc(nm1 ? t("hello_name", { name: nm1 }) : t("hello")) + '</h1><span class="chipst">' + t("streak", { n: streak }) + "</span></div>";
@@ -117,7 +119,9 @@ R.home = () => {
 };
 
 /* ---------- повторение слов ---------- */
-ACT.revstart = () => { const q = dueList(S.srs, today()); app.st.rev = { q, i: 0, shown: false, know: 0 }; app.go("review"); };
+/* 0.3.10: слова берутся из уроков; перед повторением подгружаем нужные уроки, недоступные слова пропускаем */
+async function startReview(ids) { await ensureWords(ids); const q = ids.filter(id => wordById(id)); if (!q.length) { app.toast(t(ids.length ? "need_net" : "rev_none")); return; } app.st.rev = { q, i: 0, shown: false, know: 0 }; app.go("review"); }
+ACT.revstart = () => startReview(dueList(S.srs, today()));
 R.review = () => {
   const r = app.st.rev;
   if (!r || r.i >= r.q.length) {
@@ -138,7 +142,8 @@ ACT.revknow = e => {
 };
 
 /* ---------- вкладка «Слова» (D-54): шапка, плитки с картинками по урокам ---------- */
-ACT.revall = () => { const q = Object.keys(S.srs).slice(0, 20); if (!q.length) { app.toast(t("rev_none")); return; } app.st.rev = { q, i: 0, shown: false, know: 0 }; app.go("review"); };
+ACT.revall = () => startReview(Object.keys(S.srs).slice(0, 20));
+let wordsBusy = false;
 R.words = () => {
   const td = today(), due = dueList(S.srs, td).length, nid = nextLessonId(), vis = orderedLessons().filter(l => lessonDoneId(l.id) || l.id === nid), seen = Object.keys(S.srs).length;
   const cur = nid || (vis.length ? vis[vis.length - 1].id : null), sub = cur ? t("w_sub", { n: lessonNo(cur), title: plain(ui(C.lessons[cur].meta.title)) }) : "";
@@ -147,7 +152,11 @@ R.words = () => {
   if (due) today_ = '<div class="card3" style="display:grid;gap:12px"><h3>' + t("w_today", { n: due }) + '</h3><button class="btn go" data-act="revstart">' + t("start") + "</button></div>";
   else if (seen) today_ = '<div class="card3 empty"><div class="mcirc">' + mascotImg("win", 118, "") + "</div><h2>" + t("empty_h") + '</h2><p class="sub">' + t("empty_s") + "</p>" + (nid ? '<button class="btn go" data-act="startlesson" data-v="' + nid + '">' + t("next_lesson") + "</button>" : "") + '<button class="btn sec" data-act="revall">' + t("empty_again") + "</button></div>";
   else today_ = '<div class="card3"><h3>' + t("w_today", { n: 0 }) + '</h3><p class="sub">' + t("rev_none") + "</p></div>";
+  /* 0.3.10: слова пройденных уроков подгружаются при открытии вкладки; пока урок не загружен — только заголовок */
+  const need = vis.filter(l => !isLoaded(l.id)).map(l => l.id);
+  if (need.length && !wordsBusy) { wordsBusy = true; ensureLessons(need).then(() => { wordsBusy = false; if (need.some(isLoaded) && app.cur === "words") app.render(true); }); }
   const groups = vis.map(l => {
+    if (!isLoaded(l.id)) return '<div class="lh"><h3>' + esc(ui(C.lessons[l.id].meta.title)) + '</h3><span class="small">' + t("w_prog", { a: sumOf(l.id).words.filter(id => S.srs[id]).length, b: sumOf(l.id).nw }) + "</span></div>";
     const L = C.lessons[l.id], words = L.data.words.filter(w => w.type !== "service"), got = words.filter(w => S.srs[w.id]).length, pc = words.length ? Math.round(got / words.length * 100) : 0;
     return '<div class="lh"><h3>' + esc(ui(L.meta.title)) + '</h3><span class="small">' + t("w_prog", { a: got, b: words.length }) + '</span></div><div class="lbar" role="img" aria-label="' + pc + '%"><i style="width:' + pc + '%"></i></div><div class="wgrid">' + words.map(w => { const rep = !!S.srs[w.id]; return '<button class="wtile" data-act="word" data-v="' + esc(norm(w.ru)) + '"><span class="dot' + (rep ? " rep" : "") + '" role="img" aria-label="' + (rep ? t("w_rep") : t("w_new")) + '"></span><span class="wi">' + wordIcon(w) + "</span><b>" + esc(w.ru) + '</b><span class="small">' + esc(hint({ ru: w.gloss_ru, tg: w.tg })) + "</span></button>"; }).join("") + "</div>";
   }).join("");
@@ -157,14 +166,14 @@ R.words = () => {
 /* ---------- вкладка «Диалоги» ---------- */
 R.talk = () => {
   const c = (title, id) => '<button class="card choice" style="display:flex"' + (id ? ' data-act="dlgstart" data-v="' + id + '"' : " disabled") + '><span class="grow"><h3>' + esc(title) + "</h3></span>" + (id ? '<span class="badge g">' + t("start") + "</span>" : '<span class="badge">' + t("t_soon") + "</span>") + "</button>";
-  const list = orderedLessons().map(l => c(ui(C.lessons[l.id].data.scenario.title), l.id)).join("");
-  return band() + "<h1>" + t("t_title") + '</h1><p class="sub">' + t("t_sub") + "</p>" + list + (track() === "a" ? c(t("t2"), null) + c(t("t3"), null) : "") + '<p class="small">' + t("t_note") + "</p>";
+  const list = orderedLessons().map(l => c(ui(sumOf(l.id).scenario), l.id)).join("");
+  return band() + "<h1>" + t("t_title") + '</h1><p class="sub">' + t("t_sub") + "</p>" + list + '<p class="small">' + t("t_note") + "</p>";
 };
 
 /* ---------- экран «Прогресс» (из «Ещё» и с главной) ---------- */
 R.progress = () => {
   const P = S.progress, td = today(), total = weekGoal(S.settings.dailyMin), got = weekMinutes(P.minutes, td), pct = Math.min(100, Math.round(got / total * 100)), n = doneCount(), any = n > 0;
-  const can = orderedLessons().map(l => C.lessons[l.id]).map(L => { const d = lessonDoneId(L.meta.id); return L.data.passport.can_do.map(c => '<div class="li"><span class="tick' + (d ? " on" : "") + '">' + (d ? IC.check : "") + '</span><span class="grow">' + esc(ui(c)) + "</span></div>").join(""); }).join("");
+  const can = orderedLessons().map(l => C.lessons[l.id]).map(L => { const d = lessonDoneId(L.meta.id); return sumOf(L.meta.id).can.map(c => '<div class="li"><span class="tick' + (d ? " on" : "") + '">' + (d ? IC.check : "") + '</span><span class="grow">' + esc(ui(c)) + "</span></div>").join(""); }).join("");
   const bs = [["b1", any], ["b2", Object.values(S.srs).some(c => c.seen > 0)], ["b3", !!S.badges.dialog]];
   const bd = bs.map(x => '<div class="center" style="flex:1"><div style="width:44px;height:44px;margin:0 auto;opacity:' + (x[1] ? 1 : 0.35) + '">' + star(x[1] ? "var(--tea)" : "var(--surface)", "var(--ink)", 1.5) + '</div><span class="small">' + t(x[0]) + "</span></div>").join("");
   return top(t("p_title")) + '<div class="card center">' + bowl(pct, t("p_week")) + '<p style="margin-top:6px"><b>' + t("min_of", { a: got, b: total }) + '</b></p><p class="small">' + t("p_week") + '</p><p class="small">' + t("p_lessons") + ": " + n + " · " + t("p_words") + ": " + wordsLine() + " · " + t("p_xp") + ": " + P.xp + '</p></div><h3>' + t("p_can") + '</h3><div class="card">' + can + '</div><h3>' + t("p_badges") + '</h3><div class="card row" style="flex:none">' + bd + "</div>" + strengthsCard();

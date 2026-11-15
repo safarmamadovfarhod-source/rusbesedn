@@ -1,7 +1,7 @@
 import { app } from "./app.js";
-import { S, load, save, today, now } from "./store.js";
+import { S, load, save, today, now, hooks } from "./store.js";
 import { loadI18n, t, lang, missing } from "./i18n.js";
-import { loadAll, C, setCurrent, nextLessonId, firstLessonId } from "./content.js";
+import { loadAll, C, setCurrent, nextLessonId, firstLessonId, useLesson, prefetchNext, recacheLoaded, cacheAudio, trackLessons, lessonDoneId, ensureLessons } from "./content.js";
 import { diffDays } from "./util.js";
 import { log, logError } from "./analytics.js";
 import * as audio from "./audio.js";
@@ -35,13 +35,25 @@ app.render = keep => {
   view.innerHTML = '<div class="scr" tabindex="-1" data-screen="' + app.cur + '">' + fn() + "</div>";
   /* окно слова — поверх экрана, а не внутри прокручиваемой области (0.3.5): иначе после прокрутки списка оно оказывалось выше края экрана */
   const sh = $("#sheethost"), shHtml = sheetHtml(); if (sh) { const wasOpen = !!sh.firstChild; sh.innerHTML = shHtml; const body = sh.querySelector(".sheet"); if (body && !(keep && wasOpen)) body.scrollTop = 0; }
-  view.scrollTop = prev;
+  view.scrollTop = prev; showNoVoice();
   $("#navhost").innerHTML = isTab(app.cur) ? nav(app.cur) : "";
   const root = document.documentElement; root.lang = lang(); root.className = S.settings.large ? "large" : ""; root.dataset.theme = S.settings.theme || "c"; const mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.content = { a: "#1F4E79", b: "#3A3FD8", c: "#0D7C76" }[S.settings.theme || "c"]; syncCup();
   document.title = t("app");
 };
+/* 0.3.9: «звука не слышно?» — на любом экране, где есть кнопки прослушивания (кроме «Звуков»: там своя карточка) */
+function showNoVoice() {
+  if (!audio.voice.missing || /^s(ou)?nd/.test(app.cur)) return; const s = $("#view .scr"); if (!s || s.querySelector(".novoice")) return;
+  if (!s.querySelector('[data-act="playline"],[data-act="playall"],[data-act="exsay"],[data-act="shsay"],[data-act="wsay"]')) return;
+  const top = s.querySelector(".top"), html = audio.noVoiceHtml(t("snd_novoice")); if (top) top.insertAdjacentHTML("afterend", html); else s.insertAdjacentHTML("afterbegin", html);
+}
+audio.voice.onMissing = showNoVoice;
+hooks.fail = () => { try { app.toast(t("store_bad")); if (app.cur === "home") app.render(true); } catch (e) { } };
+/* 0.3.10: урок загружается перед открытием. Нет сети и урока нет в кэше → сообщение, экран не меняется. */
+app.useLesson = async id => { try { await useLesson(id); cacheAudio(id); return true; } catch (e) { logError(e && e.message); app.toast(t("need_net")); return false; } };
+/* пройденные уроки пути — в фоне: чтобы нажатие на знакомое слово из прошлых уроков находило перевод */
+app.warmDone = () => { try { ensureLessons(trackLessons().filter(l => lessonDoneId(l.id)).map(l => l.id)); } catch (e) { } };
 app.go = (id, o) => {
-  o = o || {}; app.st.sheet = null;
+  o = o || {}; app.st.sheet = null; if (id === "home" || id === "summary") prefetchNext(2);
   if (!o.noPush && app.cur !== id) { if (isTab(id)) app.stack = []; else app.stack.push(app.cur); }
   app.cur = id; app.view = id; app.render(false); const v = $("#view"); v.scrollTop = 0;
   if (!o.keepFocus) { const s = v.querySelector(".scr"); if (s) s.focus({ preventScroll: true }); }
@@ -114,14 +126,15 @@ async function boot() {
     try { history.replaceState({ rs: 0 }, ""); } catch (e) { }
     /* просим браузер не стирать прогресс (0.3.4, аудит В9); результат — для напоминания о резервной копии */
     try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => { if (S.persist !== ok) { S.persist = ok; save(); } }).catch(() => { }); } catch (e) { }
-    app.armBack();
+    app.armBack(); prefetchNext(2);
     if (!S.settings.tilt || S.settings.tilt === "on") startTilt();
     if (first) showSplash();
     document.body.classList.add("ready");
   } catch (e) {
     logError(e && e.message);
-    $("#view").innerHTML = '<div class="scr"><h2>Ошибка загрузки / Хатои боргирӣ</h2><p>' + String(e && e.message).replace(/[<>&]/g, "") + '</p><button class="btn" onclick="location.reload()">ОК</button></div>';
+    /* 0.3.9: понятный текст на двух языках; техническая причина — мелко внизу, для сообщения автору */
+    $("#view").innerHTML = '<div class="scr"><h2 lang="tg">Барнома бор нашуд</h2><p lang="tg">Интернетро санҷед ва тугмаи «Такрор»-ро зер кунед.</p><h2 lang="ru">Не получилось загрузить приложение</h2><p lang="ru">Проверьте интернет и нажмите «Повторить».</p><button class="btn" onclick="location.reload()">Такрор · Повторить</button><p class="small" style="margin-top:16px">' + String(e && e.message).replace(/[<>&]/g, "") + "</p></div>";
   }
-  if ("serviceWorker" in navigator) { try { await navigator.serviceWorker.register("sw.js"); } catch (e) { /* офлайн-режим недоступен (например, не HTTPS) */ } }
+  if ("serviceWorker" in navigator) { try { await navigator.serviceWorker.register("sw.js"); const warm = () => { if (navigator.serviceWorker.controller) recacheLoaded(); }; navigator.serviceWorker.addEventListener("controllerchange", warm); navigator.serviceWorker.ready.then(warm); } catch (e) { /* офлайн-режим недоступен (например, не HTTPS) */ } }
 }
 boot();
