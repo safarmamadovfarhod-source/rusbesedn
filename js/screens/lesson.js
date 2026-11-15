@@ -48,8 +48,9 @@ ACT.tr = () => { S.showTr = !(S.showTr !== false); save(); app.render(true); };
 
 /* ---------- правила и частые ошибки (путь «Знаю русский») ---------- */
 R.rules = () => {
-  const L = C.lesson, rl = (L.rules || []).map(r => '<div class="card"><h3>' + esc(r.title_ru) + "</h3><p>" + tx(r.body_ru) + '</p><p class="small">' + (r.examples_ru || []).map(esc).join(" · ") + "</p>" + moreBtn(topicFor(lid(), "rules", r.id), false) + "</div>").join("");
-  const tr = (L.traps || []).map(x => '<div class="card"><p><span class="badge" style="background:var(--bad-tint,#F8DCE3)">' + t("wrong_h") + "</span> " + esc(x.wrong_ru) + '</p><p style="margin-top:6px"><span class="badge g">' + t("right_h") + "</span> <b>" + esc(x.right_ru) + '</b></p><p class="small" style="margin-top:6px">' + esc(x.why_ru) + "</p></div>").join("");
+  /* 0.4.3: правила и ловушки показываются на языке подсказок (в пути B появились таджикские черновики) */
+  const L = C.lesson, rl = (L.rules || []).map(r => '<div class="card"><h3>' + esc(hint({ ru: r.title_ru, tg: r.title_tg }) || r.title_ru) + "</h3><p>" + tx(hint({ ru: r.body_ru, tg: r.body_tg }) || r.body_ru) + '</p><p class="small">' + (r.examples_ru || []).map(esc).join(" · ") + "</p>" + moreBtn(topicFor(lid(), "rules", r.id), false) + "</div>").join("");
+  const tr = (L.traps || []).map(x => '<div class="card"><p><span class="badge" style="background:var(--bad-tint,#F8DCE3)">' + t("wrong_h") + "</span> " + esc(x.wrong_ru) + '</p><p style="margin-top:6px"><span class="badge g">' + t("right_h") + "</span> <b>" + esc(x.right_ru) + '</b></p><p class="small" style="margin-top:6px">' + esc(hint({ ru: x.why_ru, tg: x.why_tg }) || x.why_ru) + "</p></div>").join("");
   return top(esc(ui(L.meta.title))) + "<h2>" + t("rules_h") + "</h2>" + rl + (tr ? "<h2>" + t("traps_h") + "</h2>" + tr : "") + '<div class="grow"></div><button class="btn" data-act="exstart">' + t("to_ex") + "</button>";
 };
 
@@ -77,7 +78,7 @@ export function sheetHtml() {
   }
   const wordPlay = '<button class="btn" data-act="wsay" data-v="' + esc(title) + '" data-id="' + esc(w ? w.audio : "") + '">' + playIcon(18) + t("listen") + "</button>";
   const addBtn = w ? '<button class="btn sec" data-act="wadd" data-v="' + w.id + '"' + (added ? ' aria-pressed="true"' : "") + ">" + (added ? t("w_added") : t("w_add")) + "</button>" : "";
-  return '<div class="sheet-bg" data-act="closesheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(plain(title)) + '" data-stop><div class="row" style="align-items:center;flex:none"><div class="pic" aria-hidden="true">' + (name ? avatar(n === "шарора" ? "f" : "m", 56) : wordIcon(w)) + '</div><div style="flex:3"><h2 style="font-size:1.6rem">' + esc(title) + "</h2>" + (sh.tab === "word" ? "" : "") + "</div></div>" + tabs + body + '<div class="row">' + wordPlay + addBtn + '</div><button class="btn ghost" data-act="closesheet">' + t("w_close") + "</button></div></div>";
+  return '<div class="sheet-bg" data-act="closesheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(plain(title)) + '" data-stop><div class="row sheet-top" style="align-items:center;flex:none"><div class="pic" aria-hidden="true">' + (name ? avatar(n === "шарора" ? "f" : "m", 56) : wordIcon(w)) + '</div><div style="flex:3;min-width:0"><h2 style="font-size:1.6rem">' + esc(title) + '</h2></div><button class="icon-btn" data-act="closesheet" aria-label="' + esc(t("w_close")) + '"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' + tabs + body + '<div class="row">' + wordPlay + addBtn + '</div><button class="btn ghost" data-act="closesheet">' + t("w_close") + "</button></div></div>";
 }
 ACT.word = e => { app.st.sheet = { w: e.dataset.v, tab: "word", l: e.dataset.l != null ? +e.dataset.l : null, txt: e.classList.contains("w") ? e.textContent.replace(/[.,!?;:]+$/, "") : null }; log("word_tap", { item: e.dataset.v }); app.render(true); };
 ACT.sheettab = e => { app.st.sheet.tab = e.dataset.v; app.render(true); };
@@ -134,9 +135,13 @@ R.exer = () => {
     const head = E.fb.ok ? t("fb_ok") : (ex.type === "truefalse" || !E.fb.right ? t("fb_bad") : t("fb_soft") + '<span lang="ru">' + esc(E.fb.right) + "</span>");
     fb = '<div class="dock ' + (E.fb.ok ? "fb-ok" : "fb-bad") + '" role="status"><div class="fbh"><i aria-hidden="true">' + (E.fb.ok ? "✓" : "✕") + "</i><span>" + head + "</span></div>" + (expl ? '<p class="fbx">' + expl + "</p>" : "") + moreBtn(topicFor(lid(), "ex", ex.id), !E.fb.ok) + '<button class="btn" data-act="exnext">' + t("next") + "</button></div>";
   }
+  /* 0.4.5 (Д-1): «Проверить» стоит в той же закреплённой нижней панели, где потом появляется «Дальше» */
+  const CHK = '<button class="btn sec" data-act="excheck">' + t("check") + "</button>", hasCheck = body.includes(CHK);
+  if (hasCheck) body = body.replace(CHK, "");
+  const checkDock = hasCheck && !E.fb ? '<div class="dock"><button class="btn" data-act="excheck">' + t("check") + "</button></div>" : "";
   const errBtn = '<button class="exerr" data-act="exerr">' + t("ex_err") + "</button>";
   const fixBar = E.retry ? '<p class="fixbar" role="status"><b>' + t("fix_h") + "</b> " + t("fix_n", { n: E.left || 1 }) + "</p>" : steps(flow.length, E.i);
-  return top(E.retry ? t("fix_title") : t("ex_title")) + fixBar + body + errBtn + fb;
+  return top(E.retry ? t("fix_title") : t("ex_title")) + fixBar + body + errBtn + (fb || checkDock);
 };
 function exFinish(ex, ok, right) {
   const E = app.st.ex; if (E.fb) return; E.fb = { ok, right: right || "" }; if (E.retry) { E.fix = E.fix || {}; E.fix[ex.id] = ok; E.tries = E.tries || {}; E.tries[ex.id] = (E.tries[ex.id] || 0) + 1; } else E.res[ex.id] = ok;

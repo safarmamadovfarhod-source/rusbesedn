@@ -81,7 +81,7 @@ R.home = () => {
   if (nid) {
     const L = C.lessons[nid], meta = L.meta, can = ui(sumOf(nid).can[0] || {});
     card = '<div class="card" style="display:grid;grid-template-columns:44px 1fr;gap:12px"><div style="width:44px;height:44px;color:var(--primary)">' + star("var(--primary)", "var(--ink)", 1.5) + '</div><div><small class="small">' + t("lesson_n", { n: lessonNo(nid) }) + "</small><h3>" + esc(ui(meta.title)) + '</h3><p class="sub">' + esc(can) + '</p></div>' + goBtn(nid, "btn warm", ' style="grid-column:1/-1"') + "" +
-      (tr === "a" && nid === "a0_01" ? '<button class="btn ghost" style="grid-column:1/-1;font-weight:400" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
+      (sumOf(nid).skip ? '<button class="btn ghost" style="grid-column:1/-1;font-weight:400" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
   } else {
     const last = orderedLessons(tr).slice(-1)[0];
     card = '<div class="card" style="display:grid;gap:10px"><div><h3>' + t("lesson_done") + " ✓</h3><p class=\"sub\">" + t("all_done") + "</p></div>" + (due ? '<button class="btn warm" data-act="revstart">' + t("rev_btn", { n: due }) + "</button>" : '<p class="sub">' + t("rev_none") + "</p>") + (last ? '<button class="btn sec" data-act="startlesson" data-v="' + last.id + '">' + t("lesson_again") + "</button>" : "") + "</div>";
@@ -109,7 +109,7 @@ R.home = () => {
     let lcard = card;
     if (nid) {
       const ttl = plain(ui(C.lessons[nid].meta.title)), letter = ttl.charAt(0).toUpperCase(), nTot = trackLessons(tr).length || 1, lp = Math.round(doneCount() / nTot * 100);
-      lcard = '<div class="card3"><div class="hrow"><div class="ltile" aria-hidden="true">' + esc(letter) + '</div><div class="grow"><div class="lbl-up">' + t("lesson_n", { n: lessonNo(nid) }) + "</div><h2>" + esc(ttl) + '</h2></div></div><div class="lbar" style="margin-top:14px" role="img" aria-label="' + lp + '%"><i style="width:' + lp + '%"></i></div>' + goBtn(nid, "btn go", ' style="margin-top:16px"') + "" + (tr === "a" && nid === "a0_01" ? '<button class="btn ghost" style="font-weight:400" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
+      lcard = '<div class="card3"><div class="hrow"><div class="ltile" aria-hidden="true">' + esc(letter) + '</div><div class="grow"><div class="lbl-up">' + t("lesson_n", { n: lessonNo(nid) }) + "</div><h2>" + esc(ttl) + '</h2></div></div><div class="lbar" style="margin-top:14px" role="img" aria-label="' + lp + '%"><i style="width:' + lp + '%"></i></div>' + goBtn(nid, "btn go", ' style="margin-top:16px"') + "" + (sumOf(nid).skip ? '<button class="btn ghost" style="font-weight:400" data-act="skipstart">' + t("skip_offer") + "</button>" : "") + "</div>";
     }
     return hdr + pre + lcard + '<div class="card3 goalrow"><div class="cupsm">' + bowl(pct, t("weekgoal")) + '</div><div class="grow"><b>' + t("min_of", { a: got, b: total }) + '</b><div class="bar" role="img" aria-label="' + pct + '%"><i style="width:' + pct + '%"></i></div><p class="small">' + t("weekgoal") + "</p></div></div>" + tiltBtn + tail;
   }

@@ -1,5 +1,5 @@
 /* Сервис-воркер: офлайн-режим. Версия и список файлов подставляются tools/build_manifest.py */
-const VERSION = "2566b69a8c";
+const VERSION = "39eb530f6c";
 const CACHE = "rs-" + VERSION;
 const PRECACHE = [
  "./",
@@ -59,6 +59,7 @@ const PRECACHE = [
  "js/config.js",
  "js/content.js",
  "js/cup.js",
+ "js/flags.js",
  "js/i18n.js",
  "js/main.js",
  "js/nav.js",

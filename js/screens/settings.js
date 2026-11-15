@@ -11,6 +11,7 @@ import { log, counts } from "../analytics.js";
 import { buildReport, mailtoUrl } from "../report.js";
 import { CONFIG } from "../config.js";
 import * as audio from "../audio.js";
+import { featureIds, featureState, setFlag, labOpen, LAB_TAPS } from "../flags.js";
 const R = app.R, ACT = app.ACT;
 
 /* ---------- «Ещё»: меню разделов (0.3.5) — каждый раздел на своей странице, как в Duolingo ---------- */
@@ -37,7 +38,7 @@ R.settings = () => {
     mrow("share", t("m_share"), t("m_share_s"), 'data-go="setshare"'),
     mrow("help", t("report"), t("m_help_s"), 'data-act="repopen"'),
     mrow("about", t("n_about"), t("ab_ver", { v: CONFIG.APP_VERSION }), 'data-go="about"')
-  ].concat(CONFIG.DEV_PANEL ? [mrow("dev", t("dev_h"), t("m_dev_s"), 'data-go="setdev"')] : []);
+  ].concat(labOpen() ? [mrow("dev", t("lab_h"), t("lab_s"), 'data-go="setlab"')] : []).concat(CONFIG.DEV_PANEL ? [mrow("dev", t("dev_h"), t("m_dev_s"), 'data-go="setdev"')] : []);
   return band() + "<h1>" + t("n_more") + '</h1><div class="mlist">' + rows.join("") + "</div>";
 };
 /* Учёба: язык интерфейса, путь, подсказки, цель в день */
@@ -121,9 +122,19 @@ const tgBtn = () => CONFIG.SUPPORT_TG ? '<a class="btn sec" style="margin-top:12
 R.about = () => {
   const mail = "mailto:" + CONFIG.REPORT_TO + "?subject=" + encodeURIComponent(t("app"));
   return hdrBack(t("n_about")) +
-    '<div class="card3 hrow"><div class="mcirc sm">' + mascotImg("hi", 74, "") + '</div><div><h2>' + t("app") + '</h2><p class="small">' + t("ab_ver", { v: CONFIG.APP_VERSION }) + "</p></div></div>" +
+    '<div class="card3 hrow"><div class="mcirc sm">' + mascotImg("hi", 74, "") + '</div><div><h2>' + t("app") + '</h2><button class="plainbtn small" data-act="vertap" style="min-height:48px;text-align:left">' + t("ab_ver", { v: CONFIG.APP_VERSION }) + "</button></div></div>" +
     '<div class="card3"><div class="lbl-up">' + t("ab_author") + '</div><h2 style="margin-top:6px">' + esc(t("ab_name")) + '</h2><p class="small">' + t("ab_role") + '</p>' + (CONFIG.REPORT_TO ? '<a class="btn sec" style="margin-top:12px" href="' + esc(mail) + '">' + t("ab_write") + "</a>" : "") + tgBtn() + "</div>" +
     '<div class="card3"><div class="lbl-up">' + t("ab_data_h") + '</div><p style="margin-top:6px">' + t("ab_data") + '</p><button class="arow" data-go="privacy" style="margin-top:10px"><span>' + t("ab_privacy") + "</span>" + IC.back.replace("M15 5l-7 7 7 7", "M9 5l7 7-7 7") + "</button></div>" +
     '<div class="card3"><div class="lbl-up">' + t("ab_thanks_h") + '</div><p style="margin-top:6px">' + t("ab_font") + "<br>" + t("ab_voice") + "</p></div>";
 };
+/* Пробные функции (задача 8): включение готовых к проверке функций на этом телефоне */
+R.setlab = () => {
+  const rows = featureIds().map(id => { const f = featureState(id);
+    return '<div class="card3"><h3 style="margin:0">' + t("f_" + id) + '</h3><p class="small" style="margin-top:4px">' + t("f_" + id + "_s") + "</p>" +
+      (f.ready ? '<div class="seg" style="margin-top:10px"><button data-act="setflag" data-id="' + id + '" data-v="1" aria-pressed="' + f.on + '">' + t("lab_on") + '</button><button data-act="setflag" data-id="' + id + '" data-v="0" aria-pressed="' + !f.on + '">' + t("lab_off") + "</button></div>"
+        : '<p style="margin-top:10px"><span class="badge">' + t("lab_soon") + "</span></p>") + "</div>"; }).join("");
+  return top(t("lab_h")) + '<p class="small">' + t("lab_note") + "</p>" + rows;
+};
+ACT.setflag = e => { setFlag(e.dataset.id, e.dataset.v === "1"); app.render(true); };
+ACT.vertap = () => { if (labOpen()) return; app.st.vt = (app.st.vt || 0) + 1; if (app.st.vt >= LAB_TAPS) { S.settings.lab = true; save(); app.st.vt = 0; app.toast(t("lab_opened")); } };
 R.privacy = () => top(t("priv_title")) + '<div class="card3" style="display:grid;gap:12px">' + ["priv_1", "priv_2", "priv_3", "priv_4", "priv_5"].map(k => "<p>" + t(k) + "</p>").join("") + "</div>";

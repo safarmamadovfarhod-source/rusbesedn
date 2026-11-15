@@ -72,6 +72,10 @@ document.addEventListener("click", ev => {
 /* фокус с клавиатуры не прячется под нижним меню (аудит 7.6) */
 document.addEventListener("focusin", ev => { const el = ev.target; if (el && el.closest && el.closest("#view") && el.scrollIntoView) { try { el.scrollIntoView({ block: "nearest" }); } catch (e) { } } });
 document.addEventListener("change", ev => { const el = ev.target.closest("[data-act-change]"); if (el && app.ACT[el.dataset.actChange]) app.ACT[el.dataset.actChange](el); });
+/* 0.4.5 (Д-2): окно слова закрывается движением пальца вниз, если текст окна прокручен к началу */
+let sheetSwipe = null;
+document.addEventListener("touchstart", ev => { const s = ev.target.closest && ev.target.closest(".sheet"), p = ev.touches[0]; sheetSwipe = s && s.scrollTop <= 0 && p ? { x: p.clientX, y: p.clientY } : null; }, { passive: true });
+document.addEventListener("touchend", ev => { const a = sheetSwipe, p = ev.changedTouches[0]; sheetSwipe = null; if (!a || !p || !app.st.sheet) return; const dy = p.clientY - a.y, dx = Math.abs(p.clientX - a.x); if (dy > 90 && dy > dx * 2) { app.st.sheet = null; app.render(true); } }, { passive: true });
 document.addEventListener("keydown", ev => { if (ev.key === "Escape" && app.st.sheet) { app.st.sheet = null; app.render(true); } });
 /* Кнопка «назад» телефона (0.3.4, аудит В6): держим одну «запасную» запись в истории браузера.
    Нажатие «назад» закрывает окно слова или ведёт на предыдущий экран приложения;

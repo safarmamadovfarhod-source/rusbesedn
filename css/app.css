@@ -287,7 +287,7 @@ a.btn{text-decoration:none}
 .dock .fbh{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem}
 .dock .fbh i{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-style:normal;font-weight:700}
 .dock.fb-ok .fbh i{background:var(--ok)}
-.dock.fb-bad .fbh i{background:var(--tea-d)}
+.dock.fb-bad .fbh i{background:#8F5E12}
 .dock .fbx{margin:0;color:var(--muted);font-size:.95rem}
 .dock .gmore{margin:0;background:var(--surface)}
 .exerr{align-self:center;min-height:48px;border:0;background:none;color:var(--muted);font:inherit;font-size:.875rem;text-decoration:underline;cursor:pointer}
@@ -329,7 +329,7 @@ a.btn{text-decoration:none}
 }
 /* 0.3.7: словарь терминов — подсвеченный термин в объяснении и карточка снизу */
 .term{display:inline;padding:0 1px;margin:0;border:0;background:none;font:inherit;color:var(--primary-d);font-weight:700;text-decoration:underline dotted;text-decoration-thickness:2px;text-underline-offset:3px;cursor:pointer;border-radius:4px}
-.term sup{font-size:.7em;margin-left:1px;color:var(--primary)}
+.term sup{font-size:.75rem;margin-left:1px;color:var(--primary-d)}
 .term:hover,.term:focus-visible{background:var(--tint)}
 .fb-bad .term,.fb-ok .term{color:inherit}
 .tsheet .th,.thead .th{font-size:1.6rem;margin:0}
@@ -365,3 +365,10 @@ a.btn{text-decoration:none}
 .nav button[aria-current=page] svg text{fill:#fff}
 .nav svg circle.d{fill:currentColor;stroke:none}
 .nav button[aria-current=page] .pill svg circle.d{fill:var(--primary)}
+/* 0.4.4: строка версии в «О приложении» — незаметная кнопка (5 нажатий открывают «Пробные функции») */
+.plainbtn{background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;cursor:default;-webkit-tap-highlight-color:transparent;display:block}
+.plainbtn.small{color:var(--muted);font-size:.875rem}
+/* 0.4.5 (Д-2): шапка окна слова не уезжает при прокрутке; в ней крестик */
+.sheet .sheet-top{position:sticky;top:-18px;z-index:1;margin:-18px -18px 0;padding:18px 18px 8px;background:#fff;border-radius:24px 24px 0 0}
+.sheet-top .icon-btn{color:var(--ink)}
+/* 0.4.5 (Д-5): в карточке «Неверно» белый крестик на более тёмном круге (контраст 5,5) */

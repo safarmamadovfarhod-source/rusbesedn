@@ -16,6 +16,8 @@ const R = app.R, ACT = app.ACT;
 const obTop = (n, title) => top(title, { back: n > 1 }) + steps(6, n - 1);
 const opt = (act, v, on, title, sub, pre) => '<button class="choice" data-act="' + act + '" data-v="' + v + '" aria-pressed="' + on + '">' + (pre || "") + '<span style="display:block"><b>' + title + '</b><span class="small" style="display:block;font-weight:400">' + sub + "</span></span></button>";
 const nextBtn = (ok, act) => '<div class="grow"></div>' + (ok ? '<button class="btn" data-act="' + (act || "obnext") + '">' + t("ob_next") + "</button>" : "");
+/* 0.4.5 (Д-4): на экранах с двумя-тремя вариантами список прижат к низу, под большой палец; место под кнопку держится всегда, чтобы список не прыгал */
+const lowList = (list, ok) => '<div class="grow"></div><div style="display:grid;gap:10px">' + list + "</div>" + (ok ? '<button class="btn" data-act="obnext">' + t("ob_next") + "</button>" : '<div style="min-height:52px" aria-hidden="true"></div>');
 
 /* 1. язык: только два слова, без текста об уроках */
 R.lang = () => band() + '<div class="grow"></div><div class="center"><h1>Забон · Язык</h1><p class="sub" style="margin-top:8px">Забони барномаро интихоб кунед<br>Выберите язык интерфейса</p></div>' +
@@ -25,7 +27,7 @@ ACT.setlang = e => { S.settings.uiLang = e.dataset.v; save(); log("lang_set", { 
 /* 2. путь */
 R.path = () => {
   const tr = S.settings.track, ok = app.st.ob && app.st.ob.pathSet;
-  return obTop(2, t("ob_path_t")) + '<div style="display:grid;gap:10px">' + opt("setpath", "a", ok && tr === "a", t("ob_path_a"), t("ob_path_a_s")) + opt("setpath", "b", ok && tr === "b", t("ob_path_b"), t("ob_path_b_s")) + "</div>" + nextBtn(ok);
+  return obTop(2, t("ob_path_t")) + lowList(opt("setpath", "a", ok && tr === "a", t("ob_path_a"), t("ob_path_a_s")) + opt("setpath", "b", ok && tr === "b", t("ob_path_b"), t("ob_path_b_s")), ok);
 };
 ACT.setpath = e => { const v = e.dataset.v; S.settings.track = v; S.settings.hintLang = v === "a" ? "tg" : "ru"; S.settings.level = null; app.st.ob = Object.assign(app.st.ob || {}, { pathSet: true }); save(); log("path_set", { path: v }); app.render(true); };
 
@@ -34,7 +36,7 @@ R.level = () => {
   const a = S.settings.track === "a", lv = S.settings.level;
   const list = a ? opt("setlevel", "zero", lv === "zero", t("ob_lva_zero"), t("ob_lva_zero_s")) + opt("setlevel", "diag", lv === "diag", t("ob_lva_diag"), t("ob_lva_diag_s"))
     : opt("setlevel", "check", lv === "check", t("ob_lvb_check"), t("ob_lvb_check_s")) + opt("setlevel", "b1", lv === "b1", t("ob_lvb_b1"), t("ob_lvb_s")) + opt("setlevel", "b2", lv === "b2", t("ob_lvb_b2"), t("ob_lvb_s"));
-  return obTop(3, t(a ? "ob_lva_t" : "ob_lvb_t")) + '<div style="display:grid;gap:10px">' + list + "</div>" + nextBtn(!!lv);
+  return obTop(3, t(a ? "ob_lva_t" : "ob_lvb_t")) + lowList(list, !!lv);
 };
 ACT.setlevel = e => { S.settings.level = e.dataset.v; save(); app.render(true); };
 
@@ -52,7 +54,8 @@ const PREV = {
 };
 const swatch = id => '<span class="thprev" aria-hidden="true"><svg viewBox="0 0 66 112" width="56" height="95">' + PREV[id] + "</svg></span>";
 export const themePicker = () => THEMES.map(x => opt("settheme", x[0], S.settings.theme === x[0], t("th_" + x[0]), t("th_" + x[0] + "_s"), swatch(x[0]))).join("");
-R.theme = () => obTop(4, t("ob_th_t")) + '<p class="small">' + t("ob_th_s") + '</p><div style="display:grid;gap:10px">' + themePicker() + "</div>" + nextBtn(true);
+/* 0.4.5 (Д-4): «Дальше» закреплена внизу — на экране 320 точек она уходила под край */
+R.theme = () => obTop(4, t("ob_th_t")) + '<p class="small">' + t("ob_th_s") + '</p><div style="display:grid;gap:10px">' + themePicker() + '</div><div class="dock"><button class="btn" data-act="obnext">' + t("ob_next") + "</button></div>";
 ACT.settheme = e => { S.settings.theme = e.dataset.v; save(); app.applyTheme && app.applyTheme(); app.render(true); };
 
 /* 5. минуты */
