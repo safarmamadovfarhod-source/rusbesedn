@@ -35,7 +35,8 @@ for c in courses["courses"]:
         d = json.loads((R / l["path"]).read_text(encoding="utf-8"))
         words = [w for w in d.get("words", []) if w.get("type") != "service"]
         l["sum"] = {"can": [{k: c[k] for k in ("ru", "tg") if k in c} for c in d.get("passport", {}).get("can_do", [])],
-                    "scenario": d.get("scenario", {}).get("title", {}), "words": [w["id"] for w in d.get("words", [])], "nw": len(words)}
+                    "scenario": d.get("scenario", {}).get("title", {}), "words": [w["id"] for w in d.get("words", [])], "nw": len(words),
+                    "skip": bool(d.get("exercises", {}).get("skip_test"))}  # 0.4.3: у урока есть тест-пропуск
         hv = hashlib.sha1()
         for fp in sorted(x for x in ldir.rglob("*") if x.is_file()): hv.update(fp.relative_to(R).as_posix().encode()); hv.update(fp.read_bytes())
         l["v"] = hv.hexdigest()[:8]

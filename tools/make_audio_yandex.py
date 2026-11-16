@@ -114,7 +114,7 @@ def collect(lesson):
         if slot.get("placeholder"): text = text.replace(slot["placeholder"], slot.get("sample", ""))
         seen.add(i); items.append((i, text, sp))
     for l in lesson["text"]: add(l.get("audio"), l["ru"], l.get("s", "f"))
-    for w in lesson["words"]: add(w.get("audio"), w["ru"], "any")
+    for w in lesson["words"]: add(w.get("audio"), w.get("say") or w["ru"], "any")   # say: вместо слова звучит пример (предлог «в» → «в магази́не»)
     for s in lesson["scenario"]["turns"]:
         add(s["bot"].get("audio_id"), s["bot"]["ru"], "m")
         for o in s["options"]: add(o.get("audio_id"), o["ru"], "f")

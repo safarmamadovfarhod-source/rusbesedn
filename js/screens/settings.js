@@ -137,4 +137,4 @@ R.setlab = () => {
 };
 ACT.setflag = e => { setFlag(e.dataset.id, e.dataset.v === "1"); app.render(true); };
 ACT.vertap = () => { if (labOpen()) return; app.st.vt = (app.st.vt || 0) + 1; if (app.st.vt >= LAB_TAPS) { S.settings.lab = true; save(); app.st.vt = 0; app.toast(t("lab_opened")); } };
-R.privacy = () => top(t("priv_title")) + '<div class="card3" style="display:grid;gap:12px">' + ["priv_1", "priv_2", "priv_3", "priv_4", "priv_5"].map(k => "<p>" + t(k) + "</p>").join("") + "</div>";
+R.privacy = () => top(t("priv_title")) + '<div class="card3" style="display:grid;gap:12px">' + ["priv_1", "priv_2", "priv_3", "priv_4", "priv_5"].map(k => "<p>" + t(k) + "</p>").join("") + '</div><a class="btn sec" style="margin-top:14px" href="privacy.html">' + t("priv_full") + "</a>";

@@ -59,8 +59,11 @@ export function playLine(o) {
       };
       a.addEventListener("playing", () => { started = true; state.mode = "file"; state.src = src.url; tick(); });
       a.addEventListener("ended", () => { if (token !== state.token) return; cancelAnimationFrame(state.raf); o.onWord && o.onWord(-1); o.onEnd && o.onEnd(); });
-      a.addEventListener("error", () => { if (token !== state.token || started) return; tryNext(); });
-      a.play().catch(() => { if (token === state.token && !started) tryNext(); });
+      /* 0.4.6: отказ файла приходит дважды (событие error и отказ play()). Переходим к следующему источнику один раз,
+         иначе без интернета в медленном темпе звучали сразу и файл, и голос телефона. */
+      let failed = false; const fail = () => { if (failed || started || token !== state.token) return; failed = true; tryNext(); };
+      a.addEventListener("error", fail);
+      a.play().catch(fail);
     };
     tryNext(); return;
   }
@@ -73,4 +76,5 @@ export function playLine(o) {
   }
 }
 /* короткая фраза/слово без подсветки (id необязателен) */
-export function playText(text, id, speaker) { playLine({ id, text, speaker, speed: S.speed || 1, onWord: null, onEnd: null }); }
+/* 0.4.7: если у слова задан пример для озвучки (C.say), голос телефона и подсветка берут его текст */
+export function playText(text, id, speaker) { playLine({ id, text: (id && C.say && C.say[id]) || text, speaker, speed: S.speed || 1, onWord: null, onEnd: null }); }

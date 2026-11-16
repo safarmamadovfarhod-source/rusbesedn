@@ -16,8 +16,17 @@
      },
      "path": "data/lessons/a0_01/lesson.json",
      "free": true,
-     "audio": null,
-     "bytes": 51052,
+     "audio": {
+      "base": "data/lessons/a0_01/audio",
+      "ext": "mp3",
+      "sets": {
+       "f_n": "data/lessons/a0_01/audio/a0_01_timings_f_n.json",
+       "f_s": "data/lessons/a0_01/audio/a0_01_timings_f_s.json",
+       "m_n": "data/lessons/a0_01/audio/a0_01_timings_m_n.json",
+       "m_s": "data/lessons/a0_01/audio/a0_01_timings_m_s.json"
+      }
+     },
+     "bytes": 969475,
      "topic": "intro",
      "sum": {
       "can": [
@@ -62,7 +71,7 @@
       "nw": 11,
       "skip": true
      },
-     "v": "8c35c53c"
+     "v": "3ef7a3a6"
     },
     {
      "id": "a0_02",
@@ -72,9 +81,18 @@
      },
      "path": "data/lessons/a0_02/lesson.json",
      "free": true,
-     "audio": null,
+     "audio": {
+      "base": "data/lessons/a0_02/audio",
+      "ext": "mp3",
+      "sets": {
+       "f_n": "data/lessons/a0_02/audio/a0_02_timings_f_n.json",
+       "f_s": "data/lessons/a0_02/audio/a0_02_timings_f_s.json",
+       "m_n": "data/lessons/a0_02/audio/a0_02_timings_m_n.json",
+       "m_s": "data/lessons/a0_02/audio/a0_02_timings_m_s.json"
+      }
+     },
      "topic": "family",
-     "bytes": 42673,
+     "bytes": 980752,
      "sum": {
       "can": [
        {
@@ -115,7 +133,7 @@
       "nw": 13,
       "skip": true
      },
-     "v": "73a966be"
+     "v": "d862aa2f"
     },
     {
      "id": "a0_03",
@@ -125,9 +143,18 @@
      },
      "path": "data/lessons/a0_03/lesson.json",
      "free": true,
-     "audio": null,
+     "audio": {
+      "base": "data/lessons/a0_03/audio",
+      "ext": "mp3",
+      "sets": {
+       "f_n": "data/lessons/a0_03/audio/a0_03_timings_f_n.json",
+       "f_s": "data/lessons/a0_03/audio/a0_03_timings_f_s.json",
+       "m_n": "data/lessons/a0_03/audio/a0_03_timings_m_n.json",
+       "m_s": "data/lessons/a0_03/audio/a0_03_timings_m_s.json"
+      }
+     },
      "topic": "shop",
-     "bytes": 41218,
+     "bytes": 1015710,
      "sum": {
       "can": [
        {
@@ -167,7 +194,7 @@
       "nw": 15,
       "skip": true
      },
-     "v": "0fe621c9"
+     "v": "2d299037"
     },
     {
      "id": "a0_04",
@@ -177,9 +204,18 @@
      },
      "path": "data/lessons/a0_04/lesson.json",
      "free": true,
-     "audio": null,
+     "audio": {
+      "base": "data/lessons/a0_04/audio",
+      "ext": "mp3",
+      "sets": {
+       "f_n": "data/lessons/a0_04/audio/a0_04_timings_f_n.json",
+       "f_s": "data/lessons/a0_04/audio/a0_04_timings_f_s.json",
+       "m_n": "data/lessons/a0_04/audio/a0_04_timings_m_n.json",
+       "m_s": "data/lessons/a0_04/audio/a0_04_timings_m_s.json"
+      }
+     },
      "topic": "transport",
-     "bytes": 48051,
+     "bytes": 1125056,
      "sum": {
       "can": [
        {
@@ -223,7 +259,7 @@
       "nw": 16,
       "skip": true
      },
-     "v": "7d3cf731"
+     "v": "d0dcab68"
     },
     {
      "id": "a0_05",
@@ -233,9 +269,18 @@
      },
      "path": "data/lessons/a0_05/lesson.json",
      "free": true,
-     "audio": null,
+     "audio": {
+      "base": "data/lessons/a0_05/audio",
+      "ext": "mp3",
+      "sets": {
+       "f_n": "data/lessons/a0_05/audio/a0_05_timings_f_n.json",
+       "f_s": "data/lessons/a0_05/audio/a0_05_timings_f_s.json",
+       "m_n": "data/lessons/a0_05/audio/a0_05_timings_m_n.json",
+       "m_s": "data/lessons/a0_05/audio/a0_05_timings_m_s.json"
+      }
+     },
      "topic": "work",
-     "bytes": 44423,
+     "bytes": 1118079,
      "sum": {
       "can": [
        {
@@ -277,7 +322,7 @@
       "nw": 14,
       "skip": true
      },
-     "v": "bcb97227"
+     "v": "c4d2fcb8"
     }
    ],
    "track": "a"
@@ -297,8 +342,17 @@
      "topic": "vna",
      "path": "data/lessons/b_01/lesson.json",
      "free": true,
-     "audio": null,
-     "bytes": 43769,
+     "audio": {
+      "base": "data/lessons/b_01/audio",
+      "ext": "mp3",
+      "sets": {
+       "f_n": "data/lessons/b_01/audio/b_01_timings_f_n.json",
+       "f_s": "data/lessons/b_01/audio/b_01_timings_f_s.json",
+       "m_n": "data/lessons/b_01/audio/b_01_timings_m_n.json",
+       "m_s": "data/lessons/b_01/audio/b_01_timings_m_s.json"
+      }
+     },
+     "bytes": 1065423,
      "sum": {
       "can": [
        {
@@ -341,7 +395,7 @@
       "nw": 15,
       "skip": false
      },
-     "v": "36b8e592"
+     "v": "56adc4fd"
     },
     {
      "id": "b_02",
@@ -351,8 +405,17 @@
      "topic": "vid",
      "path": "data/lessons/b_02/lesson.json",
      "free": true,
-     "audio": null,
-     "bytes": 41391,
+     "audio": {
+      "base": "data/lessons/b_02/audio",
+      "ext": "mp3",
+      "sets": {
+       "f_n": "data/lessons/b_02/audio/b_02_timings_f_n.json",
+       "f_s": "data/lessons/b_02/audio/b_02_timings_f_s.json",
+       "m_n": "data/lessons/b_02/audio/b_02_timings_m_n.json",
+       "m_s": "data/lessons/b_02/audio/b_02_timings_m_s.json"
+      }
+     },
+     "bytes": 1111531,
      "sum": {
       "can": [
        {
@@ -392,7 +455,7 @@
       "nw": 14,
       "skip": false
      },
-     "v": "aad8d2ee"
+     "v": "68bf71e6"
     },
     {
      "id": "b_03",
@@ -402,8 +465,17 @@
      "topic": "gen",
      "path": "data/lessons/b_03/lesson.json",
      "free": true,
-     "audio": null,
-     "bytes": 40195,
+     "audio": {
+      "base": "data/lessons/b_03/audio",
+      "ext": "mp3",
+      "sets": {
+       "f_n": "data/lessons/b_03/audio/b_03_timings_f_n.json",
+       "f_s": "data/lessons/b_03/audio/b_03_timings_f_s.json",
+       "m_n": "data/lessons/b_03/audio/b_03_timings_m_n.json",
+       "m_s": "data/lessons/b_03/audio/b_03_timings_m_s.json"
+      }
+     },
+     "bytes": 1109138,
      "sum": {
       "can": [
        {
@@ -446,7 +518,7 @@
       "nw": 15,
       "skip": false
      },
-     "v": "b5a94f89"
+     "v": "2f36ac8e"
     }
    ]
   }

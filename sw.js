@@ -1,5 +1,5 @@
 /* Сервис-воркер: офлайн-режим. Версия и список файлов подставляются tools/build_manifest.py */
-const VERSION = "39eb530f6c";
+const VERSION = "391ccf7f05";
 const CACHE = "rs-" + VERSION;
 const PRECACHE = [
  "./",
@@ -78,7 +78,8 @@ const PRECACHE = [
  "js/store.js",
  "js/ui.js",
  "js/util.js",
- "manifest.webmanifest"
+ "manifest.webmanifest",
+ "privacy.html"
 ];
 /* 0.3.10: уроки и озвучка — в отдельном кэше, который переживает обновление оболочки.
    Адрес файла урока содержит версию (?v=хэш из courses.json): файл скачивается один раз и заново — только когда урок изменился. */

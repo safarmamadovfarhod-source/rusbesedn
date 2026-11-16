@@ -8,6 +8,8 @@ import { t, setDict, missing } from "../js/i18n.js";
 import { log, counts } from "../js/analytics.js";
 import { buildReport, mailtoUrl } from "../js/report.js";
 import fs from "node:fs";
+import { featureState, featureIds, flag, setFlag } from "../js/flags.js";
+import { CONFIG } from "../js/config.js";
 
 test("norm: ударение, регистр, ё, пунктуация, таджикские буквы", () => {
   assert.equal(norm("Спаси́бо,"), "спасибо");
@@ -144,4 +146,44 @@ test("словарь терминов (0.3.7): поля заполнены, сс
     for (const s of x.see) assert.ok(ids.has(s), x.id + ": see " + s);
     for (const p of [...x.match.ru, ...x.match.tg]) new RegExp("(?<![\\p{L}\\u0301-])(?:" + p + ")(?![\\p{L}\\u0301])", "giu");
   }
+});
+
+test("0.4.3: у уроков 2–5 пути A есть тест-пропуск из 8 вопросов, темы и связи; в пути B у объяснений есть таджикская пара", () => {
+  const J = p => JSON.parse(fs.readFileSync(new URL("../" + p, import.meta.url), "utf8"));
+  const g = J("data/grammar.json"), ids = new Set(g.topics.map(t => t.id));
+  assert.equal(g.topics.length, 24); assert.equal(ids.size, 24, "номера тем не повторяются");
+  for (const t of g.topics) for (const q of t.quiz) assert.ok(q.a >= 0 && q.a < q.opts.length, t.id);
+  for (const lid of ["a0_02", "a0_03", "a0_04", "a0_05"]) {
+    const L = J("data/lessons/" + lid + "/lesson.json"), sk = L.exercises.skip_test;
+    assert.equal(sk.length, 8, lid);
+    for (const q of sk) { assert.equal(q.type, "choice"); assert.ok(q.q_ru && q.q_tg && q.answer >= 0 && q.answer < q.options.length, lid + " " + q.id); }
+    assert.ok(g.topics.filter(t => t.lesson === lid).length >= 2, lid + ": темы");
+    const ex = new Set(Object.values(L.exercises).flatMap(v => Array.isArray(v) ? v.map(e => e.id) : [])), gl = new Set(L.grammar_layer.map(x => x.id));
+    for (const [k, v] of Object.entries(g.links[lid].ex)) { assert.ok(ex.has(k), lid + ": задание " + k); assert.ok(ids.has(v), v); }
+    for (const [k, v] of Object.entries(g.links[lid].gl)) { assert.ok(gl.has(k), lid + ": слово " + k); assert.ok(ids.has(v), v); }
+  }
+  for (const lid of ["b_01", "b_02", "b_03"]) {
+    const L = J("data/lessons/" + lid + "/lesson.json");
+    for (const x of L.grammar_layer) for (const f of ["form", "why", "link"]) if (x[f + "_ru"]) assert.ok(x[f + "_tg"], lid + " " + x.id + " " + f);
+    for (const r of L.rules) assert.ok(r.title_tg && r.body_tg, lid + " " + r.id);
+    for (const e of L.exercises.choice) if (e.expl_ru) assert.ok(e.expl_tg, lid + " " + e.id);
+  }
+});
+
+test("переключатели функций: «в разработке» не включается, «готово» слушается выбора на телефоне", () => {
+  const F = { a: { ready: false, on: false }, b: { ready: true, on: false }, c: { ready: true, on: true }, d: { ready: false, on: true } };
+  assert.deepEqual(featureState("a", F, {}), { known: true, ready: false, on: false });
+  assert.equal(featureState("a", F, { a: true }).on, false, "функцию в разработке нельзя включить выбором");
+  assert.equal(featureState("d", F, {}).on, false, "on без ready не включает");
+  assert.equal(featureState("b", F, {}).on, false);
+  assert.equal(featureState("b", F, { b: true }).on, true);
+  assert.equal(featureState("c", F, {}).on, true);
+  assert.equal(featureState("c", F, { c: false }).on, false);
+  assert.deepEqual(featureState("нет", F, {}), { known: false, ready: false, on: false });
+});
+
+test("переключатели функций: в сборке Читалка, Запись голоса и Сохранение выключены", () => {
+  assert.deepEqual(featureIds(), ["reader", "voice", "sync"]);
+  for (const id of featureIds()) { assert.equal(flag(id), false, id); assert.equal(setFlag(id, true), false, id + ": включить нельзя"); assert.equal(flag(id), false, id); }
+  assert.equal(CONFIG.LAB_MENU, false);
 });

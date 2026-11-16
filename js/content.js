@@ -1,7 +1,7 @@
 import { norm } from "./util.js";
 import { S } from "./store.js";
 /* Содержимое: курсы (пути a и b), уроки, диагностики. «Текущий урок» (C.lesson) переключается через setCurrent(id). */
-export const C = { grammar: null, glossary: null, courses: null, lessons: {}, diag: {}, cur: null, lesson: null, lessonMeta: null, timings: null, idx: { word: {}, grammar: {} } };
+export const C = { grammar: null, glossary: null, courses: null, lessons: {}, diag: {}, cur: null, lesson: null, lessonMeta: null, timings: null, idx: { word: {}, grammar: {} }, say: {} };
 const NAMES = ["шарора", "манучехр"]; /* 0.3.8: герои — Шарора и Манучехр */
 async function getJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error("HTTP " + r.status + " " + url); return r.json(); }
 export async function loadAll() {
@@ -30,6 +30,7 @@ export function ensureLesson(id) {
     try {
       const m = L.meta, data = await getJSON(m.path + ver(m)); let timings = null;
       if (m.audio && m.audio.sets) { timings = {}; await Promise.all(Object.entries(m.audio.sets).map(async ([k, path]) => { try { const tj = await getJSON(path + ver(m)); timings[k] = {}; tj.lines.forEach(l => { timings[k][l.id] = l; }); } catch (e) { /* без таймингов: подсветка по оценке */ } })); }
+      (data.words || []).forEach(w => { if (w.say && w.audio) C.say[w.audio] = w.say; });  /* 0.4.7: у слова звучит пример (поле say), а не само слово */
       L.timings = timings; L.data = data; return L;
     } finally { delete pending[id]; }
   })();
@@ -44,7 +45,12 @@ export async function useLesson(id) { await ensureLesson(id); return setCurrent(
 export function lessonOfWord(wid) { for (const k in C.lessons) { const s = C.lessons[k].meta.sum; if (s && s.words && s.words.includes(wid)) return k; } return null; }
 export const ensureWords = ids => ensureLessons([...new Set(ids.map(lessonOfWord).filter(Boolean))]);
 /* ближайшие непройденные уроки пути — в фоне: откроются сразу и без интернета */
-export function prefetchNext(n) { try { orderedLessons().filter(l => !lessonDoneId(l.id)).slice(0, n || 2).forEach(l => { ensureLesson(l.id).catch(() => { }); }); } catch (e) { } }
+/* 0.4.7: звук скачивается заранее только для одного следующего урока (решение автора 15.11.2026): для ближайшего непройденного,
+   а когда урок открыт — ещё и для того, что идёт сразу за ним (см. cacheAudioAhead). */
+/* «Экономия трафика» в настройках телефона: звук заранее не качаем (сам урок и звук открытого урока — как обычно) */
+const saveData = () => { try { return !!(navigator.connection && navigator.connection.saveData); } catch (e) { return false; } };
+export function prefetchNext(n) { try { orderedLessons().filter(l => !lessonDoneId(l.id)).slice(0, n || 2).forEach((l, i) => { ensureLesson(l.id).then(() => { if (i === 0 && !saveData()) cacheAudio(l.id); }).catch(() => { }); }); } catch (e) { } }
+export function cacheAudioAhead(id) { try { const list = orderedLessons(), i = list.findIndex(l => l.id === id), nx = i >= 0 ? list[i + 1] : null; if (nx && !saveData()) ensureLesson(nx.id).then(() => cacheAudio(nx.id)).catch(() => { }); } catch (e) { } }
 /* Озвучка урока — в фоне в кэш уроков (оба голоса, обычный темп), по 3 файла одновременно: скачанный урок звучит без интернета.
    Медленный темп кэшируется при первом прослушивании. Работает, только когда сервис-воркер уже управляет страницей. */
 export function cacheAudio(id) {

@@ -1,7 +1,7 @@
 import { app } from "./app.js";
 import { S, load, save, today, now, hooks } from "./store.js";
 import { loadI18n, t, lang, missing } from "./i18n.js";
-import { loadAll, C, setCurrent, nextLessonId, firstLessonId, useLesson, prefetchNext, recacheLoaded, cacheAudio, trackLessons, lessonDoneId, ensureLessons } from "./content.js";
+import { loadAll, C, setCurrent, nextLessonId, firstLessonId, useLesson, prefetchNext, recacheLoaded, cacheAudio, cacheAudioAhead, trackLessons, lessonDoneId, ensureLessons } from "./content.js";
 import { diffDays } from "./util.js";
 import { log, logError } from "./analytics.js";
 import * as audio from "./audio.js";
@@ -49,7 +49,7 @@ function showNoVoice() {
 audio.voice.onMissing = showNoVoice;
 hooks.fail = () => { try { app.toast(t("store_bad")); if (app.cur === "home") app.render(true); } catch (e) { } };
 /* 0.3.10: урок загружается перед открытием. Нет сети и урока нет в кэше → сообщение, экран не меняется. */
-app.useLesson = async id => { try { await useLesson(id); cacheAudio(id); return true; } catch (e) { logError(e && e.message); app.toast(t("need_net")); return false; } };
+app.useLesson = async id => { try { await useLesson(id); cacheAudio(id); cacheAudioAhead(id); return true; } catch (e) { logError(e && e.message); app.toast(t("need_net")); return false; } };
 /* пройденные уроки пути — в фоне: чтобы нажатие на знакомое слово из прошлых уроков находило перевод */
 app.warmDone = () => { try { ensureLessons(trackLessons().filter(l => lessonDoneId(l.id)).map(l => l.id)); } catch (e) { } };
 app.go = (id, o) => {

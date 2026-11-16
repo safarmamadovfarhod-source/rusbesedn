@@ -77,7 +77,7 @@ def main(path):
     if L["meta"].get("ru_status") != "reviewed": w("русские тексты не проверены методистом (ru_status=%s)" % L["meta"].get("ru_status"))
     ad = p.parent / "audio"
     if ad.exists():
-        have = {f.stem for f in ad.iterdir() if f.suffix in (".mp3", ".ogg", ".wav")}
+        have = {f.stem for f in ad.rglob("*") if f.suffix in (".mp3", ".ogg", ".wav")}  # 0.4.6: записи лежат в подпапках <голос>/<темп>
         miss = sorted(x for x in audio_ids if x and x not in have)
         if miss: w("нет аудиофайлов для: " + ", ".join(miss))
     else: w("папки audio нет: приложение использует голос устройства («демо-голос»)")
